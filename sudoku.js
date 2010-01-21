@@ -1,3 +1,6 @@
+// Copyright 2010 Michael Chaney
+// Please see accompanying LICENSE file - MIT license.
+
 // From page 22 in the Javascript: The Good Parts book from O'Reilly Press.
 if (typeof Object.create !== 'function') {
 	Object.create = function(o) {
