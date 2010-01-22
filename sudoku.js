@@ -12,7 +12,8 @@ if (typeof Object.create !== 'function') {
 
 // In following code, i is analogous to x, j is analogous to y
 var Cell = {
-	'box': null, 'x': null, 'y': null, 'value': null, 'div_id': null, 'showing': null, 'guesses': null,
+	'box': null, 'x': null, 'y': null, 'value': null, 'div_id': null,
+	'showing': null, 'guesses': null, 'locked': null,
 	'display_values': ['1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','0'],
 	'init': function(box, x, y, value) {
 		this.box = box;
@@ -56,6 +57,12 @@ var Cell = {
 			this.clear();
 			this.showing = 'answer';
 			$('<span class="revealed value">' + this.display_values[this.value] + '</span>').appendTo('#'+this.div_id)
+		}
+	},
+	'set_value': function(answer) {
+		if (!this.locked) {
+			this.value=answer;
+			this.reveal();
 		}
 	}
 };
@@ -191,6 +198,21 @@ var Sudoku = {
 			var clicked_item = String.fromCharCode(event.keyCode);
 			var num = Cell.value_from_display(clicked_item);
 			sudoku.set_number(num);
+		});
+		$(".cell").click(function(event) {
+			if (!sudoku.current_number) { return; }
+			var reg;
+			// assignment on next line
+			if (reg=this.id.match(/box_(\d+)_(\d+)_cell_(\d+)_(\d+)/)) {
+				var cell=sudoku.boxes[parseInt(reg[1])][parseInt(reg[2])].cells[parseInt(reg[3])][parseInt(reg[4])];
+				if (cell) {
+					if (event.shiftKey) {
+						cell.display_guess(sudoku.current_number);
+					} else {
+						cell.set_value(sudoku.current_number);
+					}
+				}
+			}
 		});
 	},
 	'handle_number_click': function() {
