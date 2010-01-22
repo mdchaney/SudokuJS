@@ -12,8 +12,8 @@ if (typeof Object.create !== 'function') {
 
 // In following code, i is analogous to x, j is analogous to y
 var Cell = {
-	'box': null, 'x': null, 'y': null, 'value': null, 'div_id': null, 'revealed': null, 'guesses': null,
-	'display_values': ['1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'],
+	'box': null, 'x': null, 'y': null, 'value': null, 'div_id': null, 'showing': null, 'guesses': null,
+	'display_values': ['1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','0'],
 	'init': function(box, x, y, value) {
 		this.box = box;
 		this.x = x;
@@ -22,23 +22,39 @@ var Cell = {
 		this.guesses = new Array(this.box.size*this.box.size);
 		this.value = value;
 	},
+	'value_from_display': function(display) {
+		for (var i=0; i<this.display_values.length; i++) {
+			if (display == this.display_values[i]) {
+				return i;
+			}
+		}
+		return null;
+	},
 	'display': function() {
 		$('<div class="cell" id="'+this.div_id+'"></div>').appendTo("#"+this.box.div_id);
 		$('#'+this.div_id).width(23).height(23).css('top',this.y*30+5).css('left',this.x*30+5).addClass('x_'+(this.x+this.box.x*this.box.size)).addClass('y_'+(this.y+this.box.y*this.box.size));
 	},
+	'clear': function() {
+		this.showing = null;
+		$('#'+this.div_id+' *').remove();
+	},
 	'display_guesses': function() {
+		this.clear();
+		this.showing='guess';
 		for (var i=0; i<this.box.size*this.box.size; i++) {
 			if (this.guesses[i]) this.display_guess(i);
 		}
 	},
 	'display_guess': function(guess) {
+		if (this.showing!==null && this.showing!=='guess') this.clear();
+		this.showing='guess';
 		$('<div class="guess" id="'+this.div_id+'_guess_'+guess+'">'+this.display_values[guess]+'</div>').appendTo('#'+this.div_id);
 		$('#'+this.div_id+'_guess_'+guess).css('top',Math.floor(guess/this.box.size)*8-1).css('left',(guess%this.box.size)*8+2);
 	},
 	'reveal': function() {
-		if (this.value!==null) {
-			this.revealed = true;
-			$('#'+this.div_id+' *').remove();
+		if (this.value!==null && this.showing!=='answer') {
+			this.clear();
+			this.showing = 'answer';
 			$('<span class="revealed value">' + this.display_values[this.value] + '</span>').appendTo('#'+this.div_id)
 		}
 	}
@@ -89,6 +105,13 @@ var Box = {
 				this.cells[x][y].reveal();
 			}
 		}
+	},
+	'clear': function() {
+		for (var x=0 ; x < this.size; x++) {
+			for (var y=0 ; y < this.size; y++) {
+				this.cells[x][y].clear();
+			}
+		}
 	}
 };
 
@@ -96,6 +119,7 @@ var Sudoku = {
 	size: null,
 	'boxes': null,
 	'cells': null,
+	'current_number': null,
 	'init': function(size) {
 		this.size = size;
 		this.cells = new Array(size*size)
@@ -151,18 +175,35 @@ var Sudoku = {
 			}
 		}
 	},
+	'clear': function() {
+		for (var x=0 ; x < this.size; x++) {
+			for (var y=0 ; y < this.size; y++) {
+				this.boxes[x][y].clear();
+			}
+		}
+	},
 	'create_controls': function(div_id) {
 		for (var i=0 ; i<size*size ; i++) {
 			$('<a href="#" id="choose_' + i + '" class="chooser">' + Cell.display_values[i] + '</a>').appendTo('div#controls');
-			$('#choose_'+i).click(this.set_number);
+			$('#choose_'+i).click(this.handle_number_click);
 		}
+		$(document).keyup(function(event) {
+			var clicked_item = String.fromCharCode(event.keyCode);
+			var num = Cell.value_from_display(clicked_item);
+			sudoku.set_number(num);
+		});
 	},
-	'set_number': function() {
+	'handle_number_click': function() {
 		var reg;
 		// next line is assignment, not comparison
 		if (reg=this.id.match(/choose_(.*)$/)) {
-			alert('hello '+reg[1]);
+			sudoku.set_number(parseInt(reg[1]));
 		}
+	},
+	'set_number': function(num) {
+		this.current_number = num;
+		$('.chooser').removeClass('current');
+		$('a#choose_'+num).addClass('current');
 	},
 	'solve': function() {
 	}

@@ -22,7 +22,7 @@
 			div#controls {
 				position: relative;
 			}
-			div#controls a {
+			div#controls a.chooser {
 				display: block;
 				float: left;
 				height: 20px;
@@ -31,6 +31,16 @@
 				border: 1px solid black;
 				text-decoration: none;
 				text-align: center;
+				color: blue;
+			}
+			div#controls a.chooser.current {
+				font-weight: bold;
+				background-color: blue;
+				color: white;
+			}
+			div#game-controls {
+				position: relative;
+				clear: left;
 			}
 			div.box {
 				width: 95px;
@@ -68,10 +78,7 @@
 			$(function() {
 				sudoku=Object.create(Sudoku);
 				sudoku.init(3);
-				sudoku.make_simple();
 				sudoku.display('sudoku');
-				//sudoku.show_guesses();
-				sudoku.reveal();
 				sudoku.create_controls('controls');
 			});
 			//]]>
@@ -82,6 +89,12 @@
 			<div id="sudoku" class="sudoku">
 			</div>
 			<div id="controls">
+			</div>
+			<div id="game-controls">
+				<h3>Testing</h3>
+				<button onClick="sudoku.make_simple(); sudoku.reveal();">Simple Puzzle</button>
+				<button onClick="sudoku.show_guesses();">All Pencil Marks</button>
+				<button onClick="sudoku.clear();">Clear</button>
 			</div>
 		</div>
 	</body>
