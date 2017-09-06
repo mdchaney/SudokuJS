@@ -31,13 +31,13 @@ little puzzle, and a scale of 16 makes a larger, more difficult puzzle.
 A really simple 4x4 puzzle:
 
     +-+-+-+-+
-	 |1 2|3 4|
+    |1 2|3 4|
     +   +   +
-	 |3 4|1 2|
+    |3 4|1 2|
     +-+-+-+-+
-	 |2 1|4 3|
+    |2 1|4 3|
     +   +   +
-	 |4 3|2 1|
+    |4 3|2 1|
     +-+-+-+-+
 
 Breaking from tradition, the third set of elements isn't required to be
@@ -50,15 +50,15 @@ Here's an example of a 5x5 puzzle with the third set being different
 shapes:
 
     +-+-+-+-+-+
-	 |2 3|1 4 5|
+    |2 3|1 4 5|
     +   +-+   +
-	 |1 5|4|2 3|
+    |1 5|4|2 3|
     + +-+ +-+-+
-	 |4|2 5|3 1|
+    |4|2 5|3 1|
     +-+ +-+   +
-	 |3 1|2|5 4|
+    |3 1|2|5 4|
     +-+-+ +-+ +
-	 |5 4 3 1|2|
+    |5 4 3 1|2|
     +-+-+-+-+-+
 
 
