@@ -1,7 +1,0 @@
-Released under terms of MIT License.
-
-Javascript version of Sudoku - intend to make this a full-fledged game
-with capability to generate random puzzles and self-solve (i.e. enter an
-existing puzzle and see solution).
-
-Requires jquery.
