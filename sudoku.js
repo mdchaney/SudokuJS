@@ -23,6 +23,8 @@ if (typeof Object.create !== 'function') {
 var Cell = {
 	'puzzle': null,
 	'group': null,
+	'row': null,
+	'col': null,
 	'x': null,
 	'y': null,
 	'range': null,
@@ -46,6 +48,12 @@ var Cell = {
 	'set_group': function(group) {
 		this.group = group;
 	},
+	'set_row': function(row) {
+		this.row = row;
+	},
+	'set_col': function(col) {
+		this.col = col;
+	},
 	'set_value': function(value) {
 		this.value = value;
 	},
@@ -59,16 +67,16 @@ var Cell = {
 	},
 	'display': function() {
 		var td= $("<td id='" + this.div_id + "'></td>").addClass('cell').addClass('x_'+this.x).addClass('y_'+this.y).addClass('group_'+this.group.id);
-		if (this.x == 0 || this.puzzle.cell_at(this.x-1,this.y).group != this.group) {
+		if (this.x == 0 || this.row.cells[this.x-1].group != this.group) {
 			td.addClass('ldiff');
 		}
-		if (this.x == this.range-1 || this.puzzle.cell_at(this.x+1,this.y).group != this.group) {
+		if (this.x == this.range-1 || this.row.cells[this.x+1].group != this.group) {
 			td.addClass('rdiff');
 		}
-		if (this.y == 0 || this.puzzle.cell_at(this.x,this.y-1).group != this.group) {
+		if (this.y == 0 || this.col.cells[this.y-1].group != this.group) {
 			td.addClass('tdiff');
 		}
-		if (this.y == this.range-1 || this.puzzle.cell_at(this.x,this.y+1).group != this.group) {
+		if (this.y == this.range-1 || this.col.cells[this.y+1].group != this.group) {
 			td.addClass('bdiff');
 		}
 		this.div = td;
@@ -135,10 +143,12 @@ var Cell = {
 };
 
 var Group = {
+	'puzzle': null,
 	'size': null,
 	'id': null,
 	'cells': null,
-	'init': function(id,size) {
+	'init': function(puzzle,id,size) {
+		this.puzzle = puzzle;
 		this.id = id;
 		this.size = size;
 		this.cells = new Array();
@@ -146,6 +156,49 @@ var Group = {
 	'add_cell': function(cell) {
 		this.cells.push(cell);
 		cell.set_group(this);
+	},
+	'cell_at': function(pos) {
+		return this.cells[pos];
+	}
+};
+
+var Row = {
+	'puzzle': null,
+	'size': null,
+	'id': null,
+	'cells': null,
+	'init': function(puzzle,id,size) {
+		this.puzzle = puzzle;
+		this.id = id;
+		this.size = size;
+		this.cells = new Array(size);
+	},
+	'add_cell': function(cell,pos) {
+		this.cells[pos] = cell;
+		cell.set_row(this);
+	},
+	'cell_at': function(pos) {
+		return this.cells[pos];
+	}
+};
+
+var Col = {
+	'puzzle': null,
+	'size': null,
+	'id': null,
+	'cells': null,
+	'init': function(puzzle,id,size) {
+		this.puzzle = puzzle;
+		this.id = id;
+		this.size = size;
+		this.cells = new Array(size);
+	},
+	'add_cell': function(cell,pos) {
+		this.cells[pos] = cell;
+		cell.set_col(this);
+	},
+	'cell_at': function(pos) {
+		return this.cells[pos];
 	}
 };
 
@@ -171,7 +224,23 @@ var Sudoku = {
 		this.groups = new Array(size);
 		for (var i = 0; i < size; i++) {
 			this.groups[i] = Object.create(Group);
-			this.groups[i].init(i, size);
+			this.groups[i].init(this, i, size);
+		}
+		this.rows = new Array(size);
+		for (var i = 0; i < size; i++) {
+			this.rows[i] = Object.create(Row);
+			this.rows[i].init(this, i, size);
+			for (var j = 0; j < size; j++) {
+				this.rows[i].add_cell(this.cells[j][i],j);
+			}
+		}
+		this.cols = new Array(size);
+		for (var i = 0; i < size; i++) {
+			this.cols[i] = Object.create(Col);
+			this.cols[i].init(this, i, size);
+			for (var j = 0; j < size; j++) {
+				this.cols[i].add_cell(this.cells[i][j],j);
+			}
 		}
 	},
 	'simple_groups': function() {
