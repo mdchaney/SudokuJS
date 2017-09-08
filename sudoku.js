@@ -421,7 +421,7 @@ var Sudoku = {
 		function recurse_group(group_map,size,x,y,group_number,cell_count) {
 			if (x<0 || x>=size || y<0 || y>=size) return false;
 			if (group_map[x][y] != null) return false;
-			console.log("Trying " + x + "," + y + " group: " + group_number + " cells: " + cell_count);
+			//console.log("Trying " + x + "," + y + " group: " + group_number + " cells: " + cell_count);
 			group_map[x][y] = group_number;
 			if (cell_count == 1) {
 				group_anchors[group_number] = [x,y];
@@ -435,16 +435,16 @@ var Sudoku = {
 							var count = check_size(group_map, size, i, j);
 							if (count % size != 0) {
 								clear_size_check(group_map, size);
-								console.log("Found an orphaned group of size " + count + ", backtracking");
-								log_map(group_map,size);
+								//console.log("Found an orphaned group of size " + count + ", backtracking");
+								//log_map(group_map,size);
 								group_map[x][y] = null;
 								return false;
 							} else if (count == size && group_number == size - 1) {
 								// short cut - fill these suckers in
-								console.log("Short cut to end for group " + group_number);
-								log_map(group_map,size);
+								//console.log("Short cut to end for group " + group_number);
+								//log_map(group_map,size);
 								clear_size_check(group_map, size, group_number);
-								log_map(group_map,size);
+								//log_map(group_map,size);
 								return true;
 							}
 						}
@@ -453,8 +453,8 @@ var Sudoku = {
 				clear_size_check(group_map, size);
 				// find another starting point for this group
 				potential_starting_points = find_starting_points(group_map, size);
-				console.log("Reset cell count, going to group " + group_number + " at " + x + "," + y);
-				log_map(group_map,size);
+				//console.log("Reset cell count, going to group " + group_number + " at " + x + "," + y);
+				//log_map(group_map,size);
 				for (var k=0; k<potential_starting_points.length; k++) {
 					x = potential_starting_points[k][0];
 					y = potential_starting_points[k][1];
@@ -462,7 +462,7 @@ var Sudoku = {
 						return true;
 					}
 				}
-				log_map(group_map,size);
+				//log_map(group_map,size);
 				group_map[x][y] = null;
 				return false;
 			}
@@ -525,8 +525,8 @@ var Sudoku = {
 				}
 			}
 			// backtrack
-			console.log("Backtrack from " + x + "," + y);
-			log_map(group_map,size);
+			//console.log("Backtrack from " + x + "," + y);
+			//log_map(group_map,size);
 			group_map[x][y] = null;
 			return false;
 		}
