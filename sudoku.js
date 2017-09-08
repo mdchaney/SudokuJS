@@ -544,11 +544,12 @@ var Sudoku = {
 		}
 	},
 	'make_simple': function() {
-		var s = Math.sqrt(this.size);
-		if (Math.floor(s) == s) {
+		if (this.group_sizes[this.size]) {
+			var xsize = this.group_sizes[this.size][0];
+			var ysize = this.group_sizes[this.size][1];
 			for (var x = 0 ; x < this.size ; x++) {
 				for (var y = 0 ; y < this.size ; y++) {
-					var new_val = ((x % s) * s + Math.floor(x / s) + y) % this.size;
+					var new_val = ((x % xsize) * ysize + Math.floor(x / xsize) + y) % this.size;
 					this.cells[x][y].set_value(new_val);
 				}
 			}
