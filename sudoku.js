@@ -162,6 +162,14 @@ var Cell = {
 			}
 		}
 	},
+	'may_set_to': function(val) {
+		for (var x=0; x<this.range; x++) {
+			if (this.row.cell_at(x).value == val) return false;
+			if (this.col.cell_at(x).value == val) return false;
+			if (this.group.cell_at(x).value == val) return false;
+		}
+		return true;
+	},
 	'reveal_conflicts': function() {
 		if (this.conflicts.size > 0) {
 			this.div.addClass('conflict');
@@ -188,6 +196,12 @@ var Group = {
 	},
 	'cell_at': function(pos) {
 		return this.cells[pos];
+	},
+	'already_contains': function(val) {
+		for (var i=0; i<this.size; i++) {
+			if (this.cells[i].value == val) return true;
+		}
+		return false;
 	}
 };
 
@@ -208,6 +222,12 @@ var Row = {
 	},
 	'cell_at': function(pos) {
 		return this.cells[pos];
+	},
+	'already_contains': function(val) {
+		for (var i=0; i<this.size; i++) {
+			if (this.cells[i].value == val) return true;
+		}
+		return false;
 	}
 };
 
@@ -228,6 +248,12 @@ var Col = {
 	},
 	'cell_at': function(pos) {
 		return this.cells[pos];
+	},
+	'already_contains': function(val) {
+		for (var i=0; i<this.size; i++) {
+			if (this.cells[i].value == val) return true;
+		}
+		return false;
 	}
 };
 
@@ -556,6 +582,68 @@ var Sudoku = {
 		} else {
 			throw new Error("Simple groups are only possible if size is the square of an integer.");
 		}
+	},
+	'make_complex': function() {
+		function shuffle_array(arr) {
+			for (var j=2; j<arr.length; j++) {
+				var random_idx = Math.floor(Math.random() * j);
+				if (random_idx != j) {
+					var tmp = arr[random_idx];
+					arr[random_idx] = arr[j];
+					arr[j] = tmp;
+				}
+			}
+		}
+
+		function random_list(size) {
+			var ret = new Array();
+			for (var i=0; i<size; i++) {
+				ret.push(i);
+			}
+			shuffle_array(ret);
+			return ret;
+		}
+
+		var first_group_num = Math.floor(Math.random() * this.size);
+		var first_group = this.groups[first_group_num];
+
+		// First, randomly fill the cells in one random group
+
+		var first_group_fill = random_list(this.size);
+		for (var i=0; i<this.size; i++) {
+			first_group.cells[i].value = first_group_fill[i];
+		}
+
+		// Put all remaining cells in an array and shuffle them
+
+		var remaining_cells = [];
+
+		for (var i=0; i<this.size; i++) {
+			if (i != first_group_num) {
+				remaining_cells = remaining_cells.concat(this.groups[i].cells)
+			}
+		}
+
+		shuffle_array(remaining_cells);
+
+		function walk_puzzle(remaining_cells) {
+			if (remaining_cells.length == 0) return true;
+			var this_cell = remaining_cells.shift();
+			var order_to_try = random_list(this_cell.range);
+			for (var i=0; i<this_cell.range; i++) {
+				this_cell.value = null;
+				if (this_cell.may_set_to(order_to_try[i])) {
+					this_cell.value = order_to_try[i];
+					if (walk_puzzle(remaining_cells)) return true;
+				}
+			}
+			this_cell.value = null;
+			remaining_cells.unshift(this_cell);
+			return false;
+		}
+
+		walk_puzzle(remaining_cells);
+
 	},
 	'display': function(div_id) {
 		if (this.size) {
