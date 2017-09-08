@@ -19,8 +19,9 @@ Right now the code has the ability to:
 2. Create an odd sized game board (such as 7x7) with kind of random
    layouts.
 3. Create a simple puzzle for a regularly laid out board
-4. Show pencil marks
-5. Find and highlight conflicts
+4. Create a more complex puzzle for a irregular boards
+5. Show pencil marks
+6. Find and highlight conflicts
 
 
 About Sudoku Puzzles
