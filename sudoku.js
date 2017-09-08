@@ -240,6 +240,22 @@ var Sudoku = {
 	'group_map': null,
 	'current_number': null,
 	'element': null,
+	'group_sizes': {
+			6: [2,3],
+			8: [2,4],
+			9: [3,3],
+			10: [2,5],
+			12: [3,4],
+			14: [2,7],
+			15: [3,5],
+			16: [4,4],
+			18: [3,6],
+			20: [4,5],
+			24: [4,6],
+			25: [5,5],
+			28: [4,7],
+			30: [5,6]
+	},
 	'init': function(size) {
 		if (size < 4 || size > 25) {
 			throw new Error("Size must be at least 4 and no more than 25");
@@ -285,12 +301,13 @@ var Sudoku = {
 		}
 	},
 	'simple_groups': function() {
-		var s = Math.sqrt(this.size);
-		if (Math.floor(s) == s) {
+		if (this.group_sizes[this.size]) {
+			var xsize = this.group_sizes[this.size][0];
+			var ysize = this.group_sizes[this.size][1];
 			this.clear_group_map();
 			for (i=0 ; i<this.size ; i++) {
 				for (j=0 ; j<this.size ; j++) {
-					var group_number = Math.floor(i/s) * s + Math.floor(j/s);
+					var group_number = Math.floor(i/xsize) * xsize + Math.floor(j/ysize);
 					this.group_map[i][j] = group_number;
 				}
 			}
