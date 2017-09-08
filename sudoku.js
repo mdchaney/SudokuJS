@@ -241,6 +241,9 @@ var Sudoku = {
 	'current_number': null,
 	'element': null,
 	'init': function(size) {
+		if (size < 4 || size > 25) {
+			throw new Error("Size must be at least 4 and no more than 25");
+		}
 		this.size = size;
 		this.cells = new Array(size)
 		for (var i = 0; i < size; i++) {
@@ -272,12 +275,20 @@ var Sudoku = {
 			}
 		}
 	},
+	'clear_group_map': function() {
+		this.group_map = new Array(this.size);
+		for (i=0 ; i<this.size ; i++) {
+			this.group_map[i] = new Array(this.size);
+			for (j=0 ; j<this.size ; j++) {
+				this.group_map[i][j] = null;
+			}
+		}
+	},
 	'simple_groups': function() {
 		var s = Math.sqrt(this.size);
 		if (Math.floor(s) == s) {
-			this.group_map = new Array(this.size);
+			this.clear_group_map();
 			for (i=0 ; i<this.size ; i++) {
-				this.group_map[i] = new Array(this.size);
 				for (j=0 ; j<this.size ; j++) {
 					var group_number = Math.floor(i/s) * s + Math.floor(j/s);
 					this.group_map[i][j] = group_number;
@@ -287,11 +298,231 @@ var Sudoku = {
 			throw new Error("Simple groups are only possible if size is the square of an integer.");
 		}
 	},
+	'complex_groups': function() {
+		this.clear_group_map();
+
+		var group_anchors = new Array(this.size);
+
+		function distance_squared(p1, p2) {
+			return (p2[0]-p1[0])**2 + (p2[1]-p1[1])**2;
+		}
+
+		function clear_size_check(group_map, size, replace_with = null) {
+			for (var i=0 ; i<size; i++) {
+				for (var j=0 ; j<size; j++) {
+					if (group_map[i][j] == -1) {
+						group_map[i][j] = replace_with;
+					}
+				}
+			}
+		}
+
+		// Returns the number of blocks filled in starting at x,y
+		function check_size(group_map, size, x, y) {
+			if (group_map[x][y] != null) { return 0; }
+			group_map[x][y] = -1;
+			var neighbors = new Array();
+			if (x>0) neighbors.push([x-1,y]);
+			if (x<size-1) neighbors.push([x+1,y]);
+			if (y>0) neighbors.push([x,y-1]);
+			if (y<size-1) neighbors.push([x,y+1]);
+			var count = 1;
+			for (var i=0 ; i<neighbors.length; i++) {
+				count += check_size(group_map,size,neighbors[i][0],neighbors[i][1]);
+			}
+			return count;
+		}
+
+		// Starting points:
+		// 1. on edge, beside current blocks, with three neighbors
+		// 2. on edge, beside current blocks, with two neighbors
+		// 3. three neighbors
+		// 4. two neighbors
+		// 5. one neighbor
+		function find_starting_points(group_map, size) {
+			var on_edge_three_neighbors = new Array();
+			var on_edge_two_neighbors = new Array();
+			var three_neighbors = new Array();
+			var two_neighbors = new Array();
+			var one_neighbor = new Array();
+			for (var x=0 ; x<size; x++) {
+				for (var y=0 ; y<size; y++) {
+					var edge_count = 0;
+					var neighbor_count = 0;
+					if (x==0) {
+						edge_count++;
+					} else if (group_map[x-1][y] != null) {
+						neighbor_count++;
+					}
+					if (x == size-1) {
+						edge_count++;
+					} else if (group_map[x+1][y] != null) {
+						neighbor_count++;
+					}
+					if (y==0) {
+						edge_count++;
+					} else if (group_map[x][y-1] != null) {
+						neighbor_count++;
+					}
+					if (y == size-1) {
+						edge_count++;
+					} else if (group_map[x][y+1] != null) {
+						neighbor_count++;
+					}
+					if (edge_count > 0 && edge_count + neighbor_count == 3) {
+						on_edge_three_neighbors.push([x,y])
+					} else if (edge_count > 0 && edge_count + neighbor_count == 2) {
+						on_edge_two_neighbors.push([x,y])
+					} else if (edge_count + neighbor_count > 2) {
+						three_neighbors.push([x,y])
+					} else if (edge_count + neighbor_count == 2) {
+						two_neighbors.push([x,y])
+					} else if (edge_count + neighbor_count == 1) {
+						one_neighbor.push([x,y])
+					}
+				}
+			}
+			return on_edge_three_neighbors.concat(on_edge_two_neighbors, three_neighbors, two_neighbors, one_neighbor);
+		}
+
+		function log_map(group_map,size) {
+			console.log("Map:");
+			for (var i=0 ; i<size; i++) {
+				var str = '';
+				for (var j=0 ; j<size; j++) {
+					var item = group_map[i][j];
+					if (item != null) {
+						str += item;
+					} else {
+						str += '_';
+					}
+				}
+				console.log('' + i + ': ' + str);
+			}
+		}
+
+		function recurse_group(group_map,size,x,y,group_number,cell_count) {
+			if (x<0 || x>=size || y<0 || y>=size) return false;
+			if (group_map[x][y] != null) return false;
+			console.log("Trying " + x + "," + y + " group: " + group_number + " cells: " + cell_count);
+			group_map[x][y] = group_number;
+			if (cell_count == 1) {
+				group_anchors[group_number] = [x,y];
+			} else if (cell_count == size) {
+				group_number++;
+				if (group_number == size) return true;
+				// Make sure there are no orphaned pieces
+				for (var i=0 ; i<size; i++) {
+					for (var j=0 ; j<size; j++) {
+						if (group_map[i][j] == null) {
+							var count = check_size(group_map, size, i, j);
+							if (count % size != 0) {
+								clear_size_check(group_map, size);
+								console.log("Found an orphaned group of size " + count + ", backtracking");
+								log_map(group_map,size);
+								group_map[x][y] = null;
+								return false;
+							} else if (count == size && group_number == size - 1) {
+								// short cut - fill these suckers in
+								console.log("Short cut to end for group " + group_number);
+								log_map(group_map,size);
+								clear_size_check(group_map, size, group_number);
+								log_map(group_map,size);
+								return true;
+							}
+						}
+					}
+				}
+				clear_size_check(group_map, size);
+				// find another starting point for this group
+				potential_starting_points = find_starting_points(group_map, size);
+				console.log("Reset cell count, going to group " + group_number + " at " + x + "," + y);
+				log_map(group_map,size);
+				for (var k=0; k<potential_starting_points.length; k++) {
+					x = potential_starting_points[k][0];
+					y = potential_starting_points[k][1];
+					if (recurse_group(group_map,size,x,y,group_number,1)) {
+						return true;
+					}
+				}
+				log_map(group_map,size);
+				group_map[x][y] = null;
+				return false;
+			}
+			// There are at most 3  or 4 cells that touch this one and are
+			// unused.  We need to try them in order of how close they are to
+			// the current group anchor.
+			function find_frontier_cells(group_map, size, x, y, group_number) {
+				if (x<0 || x>=size || y<0 || y>size) return [];
+				if (group_map[x][y] == null) {
+					group_map[x][y] = 'f';
+					return [[x,y]];
+				}
+				if (group_map[x][y] == group_number) {
+					group_map[x][y] = 's:' + group_number;
+					return [].concat(
+						find_frontier_cells(group_map, size, x-1, y, group_number),
+						find_frontier_cells(group_map, size, x+1, y, group_number),
+						find_frontier_cells(group_map, size, x, y-1, group_number),
+						find_frontier_cells(group_map, size, x, y+1, group_number)
+						);
+				} else {
+					return [];
+				}
+			}
+			function replace_seen_group_numbers(group_map, size, x, y) {
+				if (x<0 || x>=size || y<0 || y>size) return;
+				if (group_map[x][y] == null) return;
+				if (group_map[x][y] == 'f') {
+					group_map[x][y] = null;
+					return;
+				}
+				if (group_map[x][y].toString().startsWith('s:')) {
+					group_map[x][y] = parseInt(group_map[x][y].slice(2));
+					replace_seen_group_numbers(group_map, size, x-1, y);
+					replace_seen_group_numbers(group_map, size, x+1, y);
+					replace_seen_group_numbers(group_map, size, x, y-1);
+					replace_seen_group_numbers(group_map, size, x, y+1);
+				}
+			}
+			var frontier_cells = find_frontier_cells(group_map, size, x, y, group_number);
+			// clean up
+			replace_seen_group_numbers(group_map, size, x, y);
+			// sort frontier cells in order of distance from group anchor
+			var group_anchor = group_anchors[group_number];
+			for (var i=0 ; i<frontier_cells.length; i++) {
+				frontier_cells[i][2] = distance_squared(frontier_cells[i], group_anchor);
+			}
+			frontier_cells.sort(function(a,b) {
+				if (a[2]==b[2]) {
+					// the two are equal, so choose one randomly
+					return Math.random() - 0.5;
+				} else {
+					return a[2]-b[2];
+				}
+			});
+			// try each frontier cell
+			for (var i=0 ; i<frontier_cells.length; i++) {
+				if (recurse_group(group_map,size,frontier_cells[i][0],frontier_cells[i][1],group_number,cell_count+1)) {
+					return true;
+				}
+			}
+			// backtrack
+			console.log("Backtrack from " + x + "," + y);
+			log_map(group_map,size);
+			group_map[x][y] = null;
+			return false;
+		}
+
+		return recurse_group(this.group_map,this.size,0,0,0,1);
+	},
 	'gather_groups': function() {
 		for (i=0 ; i<this.size ; i++) {
 			for (j=0 ; j<this.size ; j++) {
 				var group_number = this.group_map[i][j];
+				if (group_number != null) {
 				this.groups[group_number].add_cell(this.cells[i][j]);
+				}
 			}
 		}
 	},
