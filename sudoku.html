@@ -74,6 +74,9 @@
 			table.sudoku td.rdiff {
 				border-right: 2px solid black;
 			}
+			table.sudoku td.conflict {
+				color: red;
+			}
 		</style>
 		<script src="jquery.js" type="text/javascript"></script>
 		<script src="sudoku.js" type="text/javascript"></script>
@@ -102,6 +105,7 @@
 				<h3>Testing</h3>
 				<button onClick="sudoku.make_simple(); sudoku.reveal();">Simple Puzzle</button>
 				<button onClick="sudoku.show_guesses();">All Pencil Marks</button>
+				<button onClick="sudoku.find_conflicts(); sudoku.reveal_conflicts();">Show Conflicts</button>
 				<button onClick="sudoku.clear();">Clear</button>
 			</div>
 		</div>

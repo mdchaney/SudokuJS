@@ -35,6 +35,7 @@ var Cell = {
 	'guesses': null,
 	'locked': null,
 	'guess_rows': null,
+	'conflicts': null,
 	'display_values': ['1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','0'],
 	'init': function(puzzle, x, y, range) {
 		this.puzzle = puzzle;
@@ -138,6 +139,34 @@ var Cell = {
 		if (!this.locked) {
 			this.value=answer;
 			this.reveal();
+		}
+	},
+	'find_conflicts': function() {
+		this.conflicts = new Array();
+		for (var x=0; x<this.range; x++) {
+			var test_cell = this.row.cell_at(x);
+			if (test_cell.value == this.value) {
+				this.conflicts.push(test_cell);
+			}
+		}
+		for (var x=0; x<this.range; x++) {
+			var test_cell = this.col.cell_at(x);
+			if (test_cell.value == this.value) {
+				this.conflicts.push(test_cell);
+			}
+		}
+		for (var x=0; x<this.range; x++) {
+			var test_cell = this.group.cell_at(x);
+			if (test_cell.value == this.value) {
+				this.conflicts.push(test_cell);
+			}
+		}
+	},
+	'reveal_conflicts': function() {
+		if (this.conflicts.size > 0) {
+			this.div.addClass('conflict');
+		} else {
+			this.div.removeClass('conflict');
 		}
 	}
 };
@@ -319,6 +348,20 @@ var Sudoku = {
 					this.cells[x][y].guesses[guess] = true;
 				}
 				this.cells[x][y].display_guesses();
+			}
+		}
+	},
+	'find_conflicts': function() {
+		for (var x=0 ; x < this.size; x++) {
+			for (var y=0 ; y < this.size; y++) {
+				this.cells[x][y].find_conflicts();
+			}
+		}
+	},
+	'reveal_conflicts': function() {
+		for (var x=0 ; x < this.size; x++) {
+			for (var y=0 ; y < this.size; y++) {
+				this.cells[x][y].reveal_conflicts();
 			}
 		}
 	},
