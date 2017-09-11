@@ -586,6 +586,12 @@ var Sudoku = {
 	},
 	'make_complex': function() {
 		function shuffle_array(arr) {
+			if (arr.length < 2) return;
+			if (Math.random() < 0.5) {
+				var tmp = arr[0];
+				arr[0] = arr[1];
+				arr[1] = tmp;
+			}
 			for (var j=2; j<arr.length; j++) {
 				var random_idx = Math.floor(Math.random() * j);
 				if (random_idx != j) {
@@ -605,23 +611,68 @@ var Sudoku = {
 			return ret;
 		}
 
-		var first_group_num = Math.floor(Math.random() * this.size);
-		var first_group = this.groups[first_group_num];
+		if (this.group_sizes[this.size]) {
 
-		// First, randomly fill the cells in one random group
+			var xsize = this.group_sizes[this.size][0];
+			var ysize = this.group_sizes[this.size][1];
 
-		var first_group_fill = random_list(this.size);
-		for (var i=0; i<this.size; i++) {
-			first_group.cells[i].value = first_group_fill[i];
-		}
+			var initial_groups = new Array();
 
-		// Put all remaining cells in an array and shuffle them
+			for (var i=0; i<Math.min(xsize,ysize); i++) {
+				initial_groups.push(i*xsize+i);
+			}
 
-		var remaining_cells = [];
+			// Fill initial groups - these groups have no cells in common
+			for (var i=0; i<initial_groups.length; i++) {
+				var group_number = initial_groups[i];
 
-		for (var i=0; i<this.size; i++) {
-			if (i != first_group_num) {
-				remaining_cells = remaining_cells.concat(this.groups[i].cells)
+				var this_group = this.groups[group_number];
+
+				var group_fill = random_list(this.size);
+				for (var j=0; j<this.size; j++) {
+					this_group.cells[j].value = group_fill[j];
+				}
+			}
+
+			// Put all remaining cells in an array and shuffle them
+
+			var remaining_cells = [];
+
+			for (var i=0; i<this.size; i++) {
+				var found = false;
+				for (var j=0; j<initial_groups.length; j++) {
+					if (initial_groups[j]==i) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					remaining_cells = remaining_cells.concat(this.groups[i].cells)
+				}
+			}
+
+		} else {
+
+			// Not a simple map, fill in single group to start
+
+			var first_group_num = Math.floor(Math.random() * this.size);
+			var first_group = this.groups[first_group_num];
+
+			// First, randomly fill the cells in one random group
+
+			var first_group_fill = random_list(this.size);
+			for (var i=0; i<this.size; i++) {
+				first_group.cells[i].value = first_group_fill[i];
+			}
+
+			// Put all remaining cells in an array and shuffle them
+
+			var remaining_cells = [];
+
+			for (var i=0; i<this.size; i++) {
+				if (i != first_group_num) {
+					remaining_cells = remaining_cells.concat(this.groups[i].cells)
+				}
 			}
 		}
 
