@@ -577,9 +577,175 @@ var Sudoku = {
 			for (var x = 0 ; x < this.size ; x++) {
 				for (var y = 0 ; y < this.size ; y++) {
 					var new_val = ((x % xsize) * ysize + Math.floor(x / xsize) + y) % this.size;
-					this.cells[x][y].set_value(new_val);
+					this.cells[x][y].value = new_val;
 				}
 			}
+		} else {
+			throw new Error("Simple groups are only possible if size is the square of an integer.");
+		}
+	},
+	'shuffle_simple': function() {
+		function shuffle_array(arr) {
+			if (arr.length < 2) return;
+			if (Math.random() < 0.5) {
+				var tmp = arr[0];
+				arr[0] = arr[1];
+				arr[1] = tmp;
+			}
+			if (arr.length > 2) {
+				for (var j=2; j<arr.length; j++) {
+					var random_idx = Math.floor(Math.random() * j);
+					if (random_idx != j) {
+						var tmp = arr[random_idx];
+						arr[random_idx] = arr[j];
+						arr[j] = tmp;
+					}
+				}
+			}
+		}
+
+		function random_list(size) {
+			var ret = new Array();
+			for (var i=0; i<size; i++) {
+				ret.push(i);
+			}
+			shuffle_array(ret);
+			return ret;
+		}
+
+		function debug_if_out_of_bounds(shuffle_map, size) {
+			for (var x = 0 ; x < size ; x++) {
+				for (var y = 0 ; y < size ; y++) {
+					if (shuffle_map[x][y][0] < 0 || shuffle_map[x][y][0] >= size || shuffle_map[x][y][1] < 0 || shuffle_map[x][y][1] >= size) {
+						debugger;
+						return;
+					}
+				}
+			}
+		}
+
+		function show_shuffle_map(shuffle_map, size) {
+			console.log("map:")
+			for (var y = 0 ; y < size ; y++) {
+				var map_line = '' + y + ': ';
+				for (var x = 0 ; x < size ; x++) {
+					map_line += ("[" + shuffle_map[x][y][0] + "," + shuffle_map[x][y][1] + "] ");
+				}
+				console.log(map_line);
+			}
+		}
+
+		function init_shuffle_map(size) {
+			var shuffle_map = new Array(size);
+			for (var x = 0 ; x < size ; x++) {
+				shuffle_map[x] = new Array(size);
+				for (var y = 0 ; y < size ; y++) {
+					shuffle_map[x][y] = [x,y];
+				}
+			}
+			return shuffle_map;
+		}
+
+		function apply_shuffle_map(shuffle_map, cells, size) {
+			function walk_shuffle_map(shuffle_map, cells, x, y, val) {
+				var next_point = shuffle_map[x][y];
+				if (!next_point) {
+					debugger;
+				}
+				if (next_point[0] != x || next_point[1] != y) {
+					shuffle_map[x][y] = [x,y];
+					walk_shuffle_map(shuffle_map, cells, next_point[0], next_point[1], cells[x][y].value);
+				}
+				if (val !== null) cells[x][y].value = val;
+			}
+
+			for (var x = 0 ; x < size ; x++) {
+				for (var y = 0 ; y < size ; y++) {
+					walk_shuffle_map(shuffle_map, cells, x, y, null);
+				}
+			}
+		}
+
+		if (this.group_sizes[this.size]) {
+			var xsize = this.group_sizes[this.size][0];
+			var ysize = this.group_sizes[this.size][1];
+			var xgroup_size = ysize;
+			var ygroup_size = xsize;
+
+			var shuffle_map = init_shuffle_map(this.size);
+			debug_if_out_of_bounds(shuffle_map, this.size);
+
+			// choose new row order for each group row
+			var new_ygroup_order = random_list(ygroup_size);
+			for (var ygroup=0; ygroup<ygroup_size; ygroup++) {
+				var first_y_in_group = ygroup * ysize;
+				if (new_ygroup_order[ygroup] != ygroup) {
+					var y_movement = (new_ygroup_order[ygroup] - ygroup) * ysize;
+					for (var y=first_y_in_group; y<first_y_in_group+ysize; y++) {
+						for (var x = 0 ; x < this.size ; x++) {
+							shuffle_map[x][y][1] += y_movement;
+						}
+					}
+				}
+			}
+
+			//show_shuffle_map(shuffle_map, this.size);
+			apply_shuffle_map(shuffle_map, this.cells, this.size);
+			shuffle_map = init_shuffle_map(this.size);
+
+			for (var ygroup=0; ygroup<ygroup_size; ygroup++) {
+				var new_y_order = random_list(ysize);
+				var first_y_in_group = ygroup * ysize;
+				for (var y=0; y<ysize; y++) {
+					if (new_y_order[y] != y) {
+						var y_movement = new_y_order[y] - y;
+						for (var x = 0 ; x < this.size ; x++) {
+							shuffle_map[x][y+first_y_in_group][1] += y_movement;
+						}
+					}
+				}
+				debug_if_out_of_bounds(shuffle_map, this.size);
+			}
+
+			//show_shuffle_map(shuffle_map, this.size);
+			apply_shuffle_map(shuffle_map, this.cells, this.size);
+			shuffle_map = init_shuffle_map(this.size);
+
+			var new_xgroup_order = random_list(xgroup_size);
+			for (var xgroup=0; xgroup<xgroup_size; xgroup++) {
+				var first_x_in_group = xgroup * xsize;
+				if (new_xgroup_order[xgroup] != xgroup) {
+					var x_movement = (new_xgroup_order[xgroup] - xgroup) * xsize;
+					for (var x=first_x_in_group; x<first_x_in_group+xsize; x++) {
+						for (var y = 0 ; y < this.size ; y++) {
+							shuffle_map[x][y][0] += x_movement;
+						}
+					}
+				}
+				debug_if_out_of_bounds(shuffle_map, this.size);
+			}
+
+			//show_shuffle_map(shuffle_map, this.size);
+			apply_shuffle_map(shuffle_map, this.cells, this.size);
+			shuffle_map = init_shuffle_map(this.size);
+
+			for (var xgroup=0; xgroup<xgroup_size; xgroup++) {
+				var new_x_order = random_list(xsize);
+				var first_x_in_group = xgroup * xsize;
+				for (var x=0; x<xsize; x++) {
+					if (new_x_order[x] != x) {
+						var x_movement = new_x_order[x] - x;
+						for (var y = 0 ; y < this.size ; y++) {
+							shuffle_map[x+first_x_in_group][y][0] += x_movement;
+						}
+					}
+				}
+				debug_if_out_of_bounds(shuffle_map, this.size);
+			}
+
+			//show_shuffle_map(shuffle_map, this.size);
+			apply_shuffle_map(shuffle_map, this.cells, this.size);
+
 		} else {
 			throw new Error("Simple groups are only possible if size is the square of an integer.");
 		}
