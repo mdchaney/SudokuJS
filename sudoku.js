@@ -267,6 +267,7 @@ var Sudoku = {
 	'current_number': null,
 	'element': null,
 	'group_sizes': {
+			4: [2,2],
 			6: [2,3],
 			8: [2,4],
 			9: [3,3],
