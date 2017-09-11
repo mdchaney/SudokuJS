@@ -10,6 +10,36 @@ if (typeof Object.create !== 'function') {
 	}
 }
 
+// Given an array of items, randomize the order
+function shuffle_array(arr) {
+	if (arr.length < 2) return;
+	if (Math.random() < 0.5) {
+		var tmp = arr[0];
+		arr[0] = arr[1];
+		arr[1] = tmp;
+	}
+	if (arr.length > 2) {
+		for (var j=2; j<arr.length; j++) {
+			var random_idx = Math.floor(Math.random() * j);
+			if (random_idx != j) {
+				var tmp = arr[random_idx];
+				arr[random_idx] = arr[j];
+				arr[j] = tmp;
+			}
+		}
+	}
+}
+
+// Create a randomly ordered list of values 0 to size-1
+function random_list(size) {
+	var ret = new Array();
+	for (var i=0; i<size; i++) {
+		ret.push(i);
+	}
+	shuffle_array(ret);
+	return ret;
+}
+
 // Each position on the puzzle is a "cell".  Each cell is a member
 // of three sets: row (y), column (x), and group.  The groups are typically
 // squares within the puzzle, but can be made of any contiguous set of
@@ -585,34 +615,6 @@ var Sudoku = {
 		}
 	},
 	'shuffle_simple': function() {
-		function shuffle_array(arr) {
-			if (arr.length < 2) return;
-			if (Math.random() < 0.5) {
-				var tmp = arr[0];
-				arr[0] = arr[1];
-				arr[1] = tmp;
-			}
-			if (arr.length > 2) {
-				for (var j=2; j<arr.length; j++) {
-					var random_idx = Math.floor(Math.random() * j);
-					if (random_idx != j) {
-						var tmp = arr[random_idx];
-						arr[random_idx] = arr[j];
-						arr[j] = tmp;
-					}
-				}
-			}
-		}
-
-		function random_list(size) {
-			var ret = new Array();
-			for (var i=0; i<size; i++) {
-				ret.push(i);
-			}
-			shuffle_array(ret);
-			return ret;
-		}
-
 		function debug_if_out_of_bounds(shuffle_map, size) {
 			for (var x = 0 ; x < size ; x++) {
 				for (var y = 0 ; y < size ; y++) {
@@ -751,31 +753,6 @@ var Sudoku = {
 		}
 	},
 	'make_complex': function() {
-		function shuffle_array(arr) {
-			if (arr.length < 2) return;
-			if (Math.random() < 0.5) {
-				var tmp = arr[0];
-				arr[0] = arr[1];
-				arr[1] = tmp;
-			}
-			for (var j=2; j<arr.length; j++) {
-				var random_idx = Math.floor(Math.random() * j);
-				if (random_idx != j) {
-					var tmp = arr[random_idx];
-					arr[random_idx] = arr[j];
-					arr[j] = tmp;
-				}
-			}
-		}
-
-		function random_list(size) {
-			var ret = new Array();
-			for (var i=0; i<size; i++) {
-				ret.push(i);
-			}
-			shuffle_array(ret);
-			return ret;
-		}
 
 		if (this.group_sizes[this.size]) {
 
