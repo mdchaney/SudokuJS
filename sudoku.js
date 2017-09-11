@@ -748,6 +748,8 @@ var Sudoku = {
 			//show_shuffle_map(shuffle_map, this.size);
 			apply_shuffle_map(shuffle_map, this.cells, this.size);
 
+			this.log_puzzle();
+
 		} else {
 			throw new Error("Simple groups are only possible if size is the square of an integer.");
 		}
@@ -902,6 +904,25 @@ var Sudoku = {
 			for (var y=0 ; y < this.size; y++) {
 				this.cells[x][y].clear();
 			}
+		}
+	},
+	'log_puzzle': function() {
+		console.log('puzzle:')
+		var str = '    +-' + '-'.repeat(this.size*5-2) + '+';
+		console.log(str);
+		for (var y=0 ; y < this.size; y++) {
+			var str = (' '+y).substr(-2) + ': | ';
+			var str2 = '    |';
+			for (var x=0 ; x < this.size; x++) {
+				str += (' ' + this.cells[x][y].value).substr(-2);
+				var right_change = (x==this.size-1 || this.cells[x][y].group != this.cells[x+1][y].group);
+				var bottom_change = (y==this.size-1 || this.cells[x][y].group != this.cells[x][y+1].group);
+				str += right_change ? ' | ' : '   ';
+				str2 += bottom_change ? '----' : '    ';
+				str2 += right_change ? '+' : (bottom_change ? '-' : ' ');
+			}
+			console.log(str);
+			console.log(str2);
 		}
 	},
 	'create_controls': function(div_id) {
