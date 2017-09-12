@@ -193,12 +193,38 @@ var Cell = {
 		}
 	},
 	'may_set_to': function(val) {
+		// If the value directly conflicts with any other member
+		// of the group, reject it.
 		for (var x=0; x<this.range; x++) {
 			if (this.row.cell_at(x).value == val) return false;
 			if (this.col.cell_at(x).value == val) return false;
 			if (this.group.cell_at(x).value == val) return false;
 		}
+		// This is a little more subtle.  If the value would cause
+		// any currently empty member of any of the three groups to
+		// have no possible value, then reject it.
+		// Simply, we find all possible remaining values for each
+		// empty group member.  If there is a single possible
+		// remaining value for a member and it's "val", then we
+		// must reject this value.
+		for (var x=0; x<this.range; x++) {
+			var test_cell = this.row.cell_at(x);
+			if (test_cell.value === null) {
+				var current_conflicts = test_cell.current_conflicts();
+				current_conflicts[val] = false;
+				if (current_conflicts.every(function(value) { return !value; })) return false;
+			}
+		}
 		return true;
+	},
+	'current_conflicts': function() {
+		var ret = new Array(this.range).fill(true);
+		for (var i=0; i<this.range; i++) {
+			ret[this.row.cell_at(i).value] = false;
+			ret[this.col.cell_at(i).value] = false;
+			ret[this.group.cell_at(i).value] = false;
+		}
+		return ret;
 	},
 	'reveal_conflicts': function() {
 		if (this.conflicts.size > 0) {
