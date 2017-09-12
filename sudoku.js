@@ -209,20 +209,35 @@ var Cell = {
 		// must reject this value.
 		for (var x=0; x<this.range; x++) {
 			var test_cell = this.row.cell_at(x);
-			if (test_cell.value === null) {
+			if (test_cell != this && test_cell.value === null) {
 				var current_conflicts = test_cell.current_conflicts();
-				current_conflicts[val] = false;
-				if (current_conflicts.every(function(value) { return !value; })) return false;
+				current_conflicts[val] = true;
+				if (current_conflicts.every(function(value) { return value; })) return false;
+			}
+			test_cell = this.col.cell_at(x);
+			if (test_cell != this && test_cell.value === null) {
+				var current_conflicts = test_cell.current_conflicts();
+				current_conflicts[val] = true;
+				if (current_conflicts.every(function(value) { return value; })) return false;
+			}
+			test_cell = this.group.cell_at(x);
+			if (test_cell != this && test_cell.value === null) {
+				var current_conflicts = test_cell.current_conflicts();
+				current_conflicts[val] = true;
+				if (current_conflicts.every(function(value) { return value; })) return false;
 			}
 		}
 		return true;
 	},
 	'current_conflicts': function() {
-		var ret = new Array(this.range).fill(true);
+		var ret = new Array(this.range).fill(false);
 		for (var i=0; i<this.range; i++) {
-			ret[this.row.cell_at(i).value] = false;
-			ret[this.col.cell_at(i).value] = false;
-			ret[this.group.cell_at(i).value] = false;
+			var val = this.row.cell_at(i).value;
+			if (val !== null) ret[val] = true;
+			val = this.col.cell_at(i).value;
+			if (val !== null) ret[val] = true;
+			val = this.group.cell_at(i).value;
+			if (val !== null) ret[val] = true;
 		}
 		return ret;
 	},
