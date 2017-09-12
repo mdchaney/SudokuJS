@@ -908,7 +908,12 @@ var Sudoku = {
 	},
 	'log_puzzle': function() {
 		console.log('puzzle:')
-		var str = '    +-' + '-'.repeat(this.size*5-2) + '+';
+		var str = '    +';
+		for (var x=0 ; x < this.size; x++) {
+			var right_change = (x==this.size-1 || this.cells[x][0].group != this.cells[x+1][0].group);
+			str += '----';
+			str += right_change ? '+' : '-';
+		}
 		console.log(str);
 		for (var y=0 ; y < this.size; y++) {
 			var bottom_change = (y==this.size-1 || this.cells[0][y].group != this.cells[0][y+1].group);
@@ -921,15 +926,25 @@ var Sudoku = {
 				} else {
 					str += (' ' + this.cells[x][y].value).substr(-2);
 				}
+				if (x == this.size - 1) {
+					var bottom_change_next = false;
+				} else {
+					var bottom_change_next = (y==this.size-1 || this.cells[x+1][y].group != this.cells[x+1][y+1].group);
+				}
+				if (y == this.size - 1) {
+					var right_change_next = false;
+				} else {
+					var right_change_next = (x==this.size-1 || this.cells[x][y+1].group != this.cells[x+1][y+1].group);
+				}
 				var right_change = (x==this.size-1 || this.cells[x][y].group != this.cells[x+1][y].group);
 				var bottom_change = (y==this.size-1 || this.cells[x][y].group != this.cells[x][y+1].group);
 				str += right_change ? ' | ' : '   ';
 				if (bottom_change) {
 					str2 += '----';
-					str2 += right_change ? '+' : '-';
+					str2 += right_change ? '+' : (right_change_next ? '+' : '-');
 				} else {
 					str2 += '    ';
-					str2 += right_change ? '|' : ' ';
+					str2 += right_change_next ? (bottom_change_next ? '+' : '|') : (right_change ? (bottom_change_next ? '+' : '|') : ' ');
 				}
 			}
 			console.log(str);
