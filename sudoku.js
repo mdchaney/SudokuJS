@@ -911,15 +911,26 @@ var Sudoku = {
 		var str = '    +-' + '-'.repeat(this.size*5-2) + '+';
 		console.log(str);
 		for (var y=0 ; y < this.size; y++) {
+			var bottom_change = (y==this.size-1 || this.cells[0][y].group != this.cells[0][y+1].group);
 			var str = (' '+y).substr(-2) + ': | ';
-			var str2 = '    |';
+			var str2 = bottom_change ? '    +' : '    |';
 			for (var x=0 ; x < this.size; x++) {
-				str += (' ' + this.cells[x][y].value).substr(-2);
+				var cell = this.cells[x][y];
+				if (cell.value === null) {
+					str += ' _';
+				} else {
+					str += (' ' + this.cells[x][y].value).substr(-2);
+				}
 				var right_change = (x==this.size-1 || this.cells[x][y].group != this.cells[x+1][y].group);
 				var bottom_change = (y==this.size-1 || this.cells[x][y].group != this.cells[x][y+1].group);
 				str += right_change ? ' | ' : '   ';
-				str2 += bottom_change ? '----' : '    ';
-				str2 += right_change ? '+' : (bottom_change ? '-' : ' ');
+				if (bottom_change) {
+					str2 += '----';
+					str2 += right_change ? '+' : '-';
+				} else {
+					str2 += '    ';
+					str2 += right_change ? '|' : ' ';
+				}
 			}
 			console.log(str);
 			console.log(str2);
