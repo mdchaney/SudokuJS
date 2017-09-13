@@ -797,6 +797,104 @@ var Sudoku = {
 	},
 	'make_complex': function() {
 
+		var initial_groups = new Array();
+
+		if (this.group_sizes[this.size]) {
+
+			var xsize = this.group_sizes[this.size][0];
+			var ysize = this.group_sizes[this.size][1];
+
+			for (var i=0; i<Math.min(xsize,ysize); i++) {
+				initial_groups.push(i*xsize+i);
+			}
+
+		} else {
+
+			// Not a simple map, fill in single group to start
+
+			var first_group_num = Math.floor(Math.random() * this.size);
+			initial_groups.push(first_group_num);
+
+		}
+
+		// Fill initial groups - these groups have no cells in common
+		for (var i=0; i<initial_groups.length; i++) {
+			var group_number = initial_groups[i];
+
+			var this_group = this.groups[group_number];
+
+			var group_fill = random_list(this.size);
+			for (var j=0; j<this.size; j++) {
+				this_group.cells[j].value = group_fill[j];
+			}
+		}
+
+		// Put all groups in a list and shuffle them
+
+		var remaining_groups = [];
+
+		for (var i=0; i<this.size; i++) {
+			var found = false;
+			for (var j=0; j<initial_groups.length; j++) {
+				if (initial_groups[j]==i) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				remaining_groups.push(this.groups[i])
+			}
+		}
+
+		shuffle_array(remaining_groups);
+
+		function walk_groups(remaining_groups, current_group_number) {
+			if (current_group_number == remaining_groups.length) return true;
+			var this_group = remaining_groups[current_group_number];
+			var number_order = random_list(this_group.size);
+			var cell_orders = new Array();
+			for (var i=0; i<this_group.size ; i++) {
+				cell_orders.push(random_list(this_group.size));
+			}
+			// We'll go through each number (using number_order) and
+			// then try each in squares based on cell_orders[num]
+
+			function walk_cells(this_group, number_order, cell_orders, current_number) {
+				if (current_number == this_group.size) return true;
+				var val = number_order[current_number];
+				var cell_order = cell_orders[current_number];
+				for (var i=0; i<this_group.size; i++) {
+					var this_cell = this_group.cell_at(cell_order[i]);
+					if (this_cell.value === null) {
+						if (this_cell.may_set_to(val)) {
+							this_cell.value = val;
+							if (walk_cells(this_group, number_order, cell_orders, current_number + 1)) return true;
+							this_cell.value = null;
+						}
+					}
+				}
+				return false;
+			}
+
+			for (var j=0; j<this_group.size; j++) {
+				if (walk_cells(this_group, number_order, cell_orders, 0)) {
+					if (walk_groups(remaining_groups, current_group_number + 1)) return true;
+				}
+				// This didn't work, so rotate each cell order list and
+				// try again
+				for (var k=0 ; k<cell_orders.length; k++) {
+					cell_orders[k].push(cell_orders[k].shift());
+				}
+			}
+
+			return false;
+		}
+
+		walk_groups(remaining_groups, 0);
+
+	},
+	'make_complex_2': function() {
+
 		if (this.group_sizes[this.size]) {
 
 			var xsize = this.group_sizes[this.size][0];
