@@ -797,51 +797,19 @@ var Sudoku = {
 	},
 	'make_complex': function() {
 
-		var initial_groups = new Array();
+		var first_group_num = Math.floor(Math.random() * this.size);
+		var first_group = this.groups[first_group_num];
 
-		if (this.group_sizes[this.size]) {
-
-			var xsize = this.group_sizes[this.size][0];
-			var ysize = this.group_sizes[this.size][1];
-
-			for (var i=0; i<Math.min(xsize,ysize); i++) {
-				initial_groups.push(i*xsize+i);
-			}
-
-		} else {
-
-			// Not a simple map, fill in single group to start
-
-			var first_group_num = Math.floor(Math.random() * this.size);
-			initial_groups.push(first_group_num);
-
-		}
-
-		// Fill initial groups - these groups have no cells in common
-		for (var i=0; i<initial_groups.length; i++) {
-			var group_number = initial_groups[i];
-
-			var this_group = this.groups[group_number];
-
-			var group_fill = random_list(this.size);
-			for (var j=0; j<this.size; j++) {
-				this_group.cells[j].value = group_fill[j];
-			}
+		var group_fill = random_list(this.size);
+		for (var j=0; j<this.size; j++) {
+			first_group.cells[j].value = group_fill[j];
 		}
 
 		// Put all groups in a list and shuffle them
-
 		var remaining_groups = [];
 
 		for (var i=0; i<this.size; i++) {
-			var found = false;
-			for (var j=0; j<initial_groups.length; j++) {
-				if (initial_groups[j]==i) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
+			if (i != first_group_num) {
 				remaining_groups.push(this.groups[i])
 			}
 		}
@@ -851,39 +819,93 @@ var Sudoku = {
 		function walk_groups(remaining_groups, current_group_number) {
 			if (current_group_number == remaining_groups.length) return true;
 			var this_group = remaining_groups[current_group_number];
-			var number_order = random_list(this_group.size);
-			var cell_orders = new Array();
-			for (var i=0; i<this_group.size ; i++) {
-				cell_orders.push(random_list(this_group.size));
-			}
-			// We'll go through each number (using number_order) and
-			// then try each in squares based on cell_orders[num]
 
-			function walk_cells(this_group, number_order, cell_orders, current_number) {
-				if (current_number == this_group.size) return true;
-				var val = number_order[current_number];
-				var cell_order = cell_orders[current_number];
-				for (var i=0; i<this_group.size; i++) {
-					var this_cell = this_group.cell_at(cell_order[i]);
+			// Before we try to fill this in, let's make sure that it's
+			// possible.
+			var all_conflicts = new Array(this_group.size);
+			for (i=0; i<this_group.size; i++) {
+				all_conflicts[i] = this_group.cell_at(i).current_conflicts();
+			}
+
+			// Make sure there are no cells that conflict with all values.
+			for (i=0; i<this_group.size; i++) {
+				if (all_conflicts[i].every(function(val) { return val; })) return false;
+			}
+
+			// Make sure every value has somewhere that it can be placed.
+			for (j=0; j<this_group.size; j++) {
+				if (all_conflicts.every(function(val) {return val[j];})) return false;
+			}
+
+			// For each value, map the cells where it can be placed
+			var possible_cells_by_value = new Array();
+
+			for (var test_value=0; test_value<this_group.size; test_value++) {
+				these_cells = new Array();
+				for (j=0; j<this_group.size; j++) {
+					if (!all_conflicts[j][test_value]) {
+						these_cells.push(this_group.cell_at(j));
+					}
+				}
+				possible_cells_by_value.push([test_value, these_cells]);
+			}
+
+			// Sort smallest list to largest list, but randomly
+			// if the list is same size.
+			possible_cells_by_value.sort(function(a,b) {
+				if (a[1].length == b[1].length) {
+					return Math.random() - 0.5;
+				} else {
+					return a[1].length - b[1].length;
+				}
+			});
+
+			// shuffle cell lists
+			for (var i=0; i<possible_cells_by_value.length ; i++) {
+				shuffle_array(possible_cells_by_value[i][1]);
+			}
+
+			var inc_steps = new Array(possible_cells_by_value.length);
+			for (i=0; i<possible_cells_by_value.length; i++) {
+				inc_steps[i] = possible_cells_by_value[i][1].length ** (possible_cells_by_value.length-i-1);
+			}
+
+			// We'll go through each value and then try each in squares
+			// based on order in possible_cells_by_value
+
+			function walk_cells(this_group, possible_cells_by_value, current_number) {
+				if (current_number == possible_cells_by_value.length) return true;
+				var val = possible_cells_by_value[current_number][0];
+				var cell_order = possible_cells_by_value[current_number][1];
+				for (var i=0; i<cell_order.length; i++) {
+					var this_cell = cell_order[i];
 					if (this_cell.value === null) {
-						if (this_cell.may_set_to(val)) {
-							this_cell.value = val;
-							if (walk_cells(this_group, number_order, cell_orders, current_number + 1)) return true;
-							this_cell.value = null;
-						}
+						this_cell.value = val;
+						if (walk_cells(this_group, possible_cells_by_value, current_number + 1)) return true;
+						this_cell.value = null;
 					}
 				}
 				return false;
 			}
 
-			for (var j=0; j<this_group.size; j++) {
-				if (walk_cells(this_group, number_order, cell_orders, 0)) {
+			var j_limit = Math.min(this_group.size**this_group.size, 2**24);
+
+			for (var j=1; j<=j_limit; j++) {
+				if (walk_cells(this_group, possible_cells_by_value, 0)) {
 					if (walk_groups(remaining_groups, current_group_number + 1)) return true;
+					// Clean out this group, try again
+					for (var i=0; i<this_group.size; i++) {
+						this_group.cells[i].value = null;
+					}
 				}
+
 				// This didn't work, so rotate each cell order list and
-				// try again
-				for (var k=0 ; k<cell_orders.length; k++) {
-					cell_orders[k].push(cell_orders[k].shift());
+				// try again.  The last one doesn't matter - it'll only
+				// have on possible slot.
+				for (var k=0 ; k<possible_cells_by_value.length-1; k++) {
+					if (j % inc_steps[k] == 0) {
+						possible_cells_by_value[k][1].push(possible_cells_by_value[k][1].shift());
+					}
 				}
 			}
 
@@ -1047,13 +1069,16 @@ var Sudoku = {
 	},
 	'log_puzzle': function() {
 		console.log('puzzle:')
-		var str = '    +';
+		var str = '     ';
+		var str2 = '    +';
 		for (var x=0 ; x < this.size; x++) {
+		   str += ('  '+x).substr(-3) + '  ';
 			var right_change = (x==this.size-1 || this.cells[x][0].group != this.cells[x+1][0].group);
-			str += '----';
-			str += right_change ? '+' : '-';
+			str2 += '----';
+			str2 += right_change ? '+' : '-';
 		}
 		console.log(str);
+		console.log(str2);
 		for (var y=0 ; y < this.size; y++) {
 			var bottom_change = (y==this.size-1 || this.cells[0][y].group != this.cells[0][y+1].group);
 			var str = (' '+y).substr(-2) + ': | ';
