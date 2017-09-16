@@ -860,14 +860,27 @@ var Sudoku = {
 				}
 			});
 
+			var singles = possible_cells_by_value.filter(function(item) { return item[1].length == 1; });
+
+			// If any of the singles point to the same cell, this ain't
+			// gonna work
+			if (singles.find(function(item, idx, arr) { for (var i=0; i<arr.length; i++) { return (i != idx && item[1][0] == arr[i][1][0]); } })) return false;
+
+			var in_between = possible_cells_by_value.filter(function(item, idx, arr) { return (item[1].length > 1 && idx < arr.length - 1); });
+
+			var last_item = possible_cells_by_value[possible_cells_by_value.length-1];
+			if (last_item[1].length == 1) last_item = null;
+
 			// shuffle cell lists
-			for (var i=0; i<possible_cells_by_value.length ; i++) {
-				shuffle_array(possible_cells_by_value[i][1]);
+			for (var i=0; i<in_between.length ; i++) {
+				shuffle_array(in_between[i][1]);
 			}
 
-			var inc_steps = new Array(possible_cells_by_value.length);
-			for (i=0; i<possible_cells_by_value.length; i++) {
-				inc_steps[i] = possible_cells_by_value[i][1].length ** (possible_cells_by_value.length-i-1);
+			var inc_steps = new Array(in_between.length);
+			var inc_levels = new Array(in_between.length);
+			for (i=0; i<in_between.length; i++) {
+				inc_steps[i] = in_between[i][1].length;
+				inc_levels[i] = 0;
 			}
 
 			// We'll go through each value and then try each in squares
@@ -888,25 +901,38 @@ var Sudoku = {
 				return false;
 			}
 
-			var j_limit = Math.min(this_group.size**this_group.size, 2**24);
+			while (true) {
+				if (walk_cells(this_group, singles, 0)) {
+					if (walk_cells(this_group, in_between, 0)) {
+						if (last_item === null || walk_cells(this_group, [last_item], 0)) {
 
-			for (var j=1; j<=j_limit; j++) {
-				if (walk_cells(this_group, possible_cells_by_value, 0)) {
-					if (walk_groups(remaining_groups, current_group_number + 1)) return true;
-					// Clean out this group, try again
-					for (var i=0; i<this_group.size; i++) {
-						this_group.cells[i].value = null;
+							if (walk_groups(remaining_groups, current_group_number + 1)) return true;
+						}
 					}
 				}
+
+				// Clean out this group, try again
+				for (var i=0; i<this_group.size; i++) {
+					this_group.cells[i].value = null;
+				}
+
+				if (in_between.length ==0) break;
 
 				// This didn't work, so rotate each cell order list and
-				// try again.  The last one doesn't matter - it'll only
-				// have on possible slot.
-				for (var k=0 ; k<possible_cells_by_value.length-1; k++) {
-					if (j % inc_steps[k] == 0) {
-						possible_cells_by_value[k][1].push(possible_cells_by_value[k][1].shift());
+				// try again.
+				var carry = 1;
+				for (var k=0 ; k<in_between.length; k++) {
+					inc_levels[k] += carry;
+					in_between[k][1].push(in_between[k][1].shift());
+					if (inc_levels[k] >= inc_steps[k]) {
+						inc_levels[k] = 0;
+						carry = 1;
+					} else {
+						carry = 0;
+						break;
 					}
 				}
+				if (carry > 0) break;
 			}
 
 			return false;
