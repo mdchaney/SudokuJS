@@ -87,18 +87,23 @@
 			var sudoku;
 			// initialize the game
 			$(function() {
-				setup_puzzle();
+				setup_regular_puzzle();
 			});
-			function setup_puzzle() {
+			function setup_regular_puzzle() {
 				$('#sudoku *').remove();
-				var size = parseInt($('#size').val());
+				var regular_size = parseInt($('#regular_size').val());
 				sudoku=Object.create(Sudoku);
-				sudoku.init(size);
-				try {
-					sudoku.simple_groups();
-				} catch (e) {
-					sudoku.complex_groups();
-				}
+				sudoku.init(regular_size);
+				sudoku.regular_groups();
+				sudoku.gather_groups();
+				sudoku.display('#sudoku');
+			}
+			function setup_irregular_puzzle() {
+				$('#sudoku *').remove();
+				var irregular_size = parseInt($('#irregular_size').val());
+				sudoku=Object.create(Sudoku);
+				sudoku.init(irregular_size);
+				sudoku.irregular_groups();
 				sudoku.gather_groups();
 				sudoku.display('#sudoku');
 			}
@@ -108,12 +113,24 @@
 	<body>
 		<div id="sudoku-wrap">
 			<div id="game-controls">
-				<button onClick="sudoku.make_simple(); sudoku.reveal();">Simple Puzzle</button>
-				<button onClick="sudoku.make_simple(); sudoku.shuffle_simple(); sudoku.reveal();">Shuffle Simple Puzzle</button>
-				<button onClick="sudoku.make_complex(); sudoku.reveal();">Complex Puzzle</button>
+				<button onClick="sudoku.make_regular(); sudoku.reveal();">Simple Puzzle</button>
+				<button onClick="sudoku.empty(); sudoku.make_regular(); sudoku.shuffle_regular(); sudoku.reveal();">Shuffle Simple Puzzle</button>
+				<button onClick="sudoku.empty(); sudoku.make_irregular(); sudoku.reveal();">Complex Puzzle</button>
 				<button onClick="sudoku.show_guesses();">All Pencil Marks</button>
 				<button onClick="sudoku.find_conflicts(); sudoku.reveal_conflicts();">Show Conflicts</button>
-				<select id="size">
+				<select id="regular_size">
+					<option value="4">4</option>
+					<option value="6">6</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="12">12</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+				</select>
+				<button onClick="setup_regular_puzzle();">Resize Regular</button>
+				<select id="irregular_size">
 					<option value="4">4</option>
 					<option value="5">5</option>
 					<option value="6">6</option>
@@ -128,7 +145,8 @@
 					<option value="15">15</option>
 					<option value="16">16</option>
 				</select>
-				<button onClick="setup_puzzle();">Clear</button>
+				<button onClick="setup_irregular_puzzle();">Resize Irregular</button>
+				<button onClick="sudoku.empty(); sudoku.reveal();">Clear</button>
 			</div>
 			<div id="sudoku" class="sudoku">
 			</div>

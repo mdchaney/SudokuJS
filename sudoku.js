@@ -330,6 +330,7 @@ var Col = {
 
 var Sudoku = {
 	'size': null,
+	'layout_style': null,
 	'groups': null,
 	'rows': null,
 	'cols': null,
@@ -398,11 +399,12 @@ var Sudoku = {
 			}
 		}
 	},
-	'simple_groups': function() {
+	'regular_groups': function() {
 		if (this.group_sizes[this.size]) {
 			var xsize = this.group_sizes[this.size][0];
 			var ysize = this.group_sizes[this.size][1];
 			this.clear_group_map();
+			this.layout_style = 'regular';
 			for (i=0 ; i<this.size ; i++) {
 				for (j=0 ; j<this.size ; j++) {
 					var group_number = Math.floor(i/xsize) * xsize + Math.floor(j/ysize);
@@ -410,11 +412,12 @@ var Sudoku = {
 				}
 			}
 		} else {
-			throw new Error("Simple groups are only possible if size is the square of an integer.");
+			throw new Error("Regular groups are only possible if size is the square of an integer.");
 		}
 	},
-	'complex_groups': function() {
+	'irregular_groups': function() {
 		this.clear_group_map();
+		this.layout_style = 'irregular';
 
 		var group_anchors = new Array(this.size);
 
@@ -641,7 +644,7 @@ var Sudoku = {
 			}
 		}
 	},
-	'make_simple': function() {
+	'make_regular': function() {
 		if (this.group_sizes[this.size]) {
 			var xsize = this.group_sizes[this.size][0];
 			var ysize = this.group_sizes[this.size][1];
@@ -652,10 +655,10 @@ var Sudoku = {
 				}
 			}
 		} else {
-			throw new Error("Simple groups are only possible if size is the square of an integer.");
+			throw new Error("Regular groups are only possible if size is the square of an integer.");
 		}
 	},
-	'shuffle_simple': function() {
+	'shuffle_regular': function() {
 		function debug_if_out_of_bounds(shuffle_map, size) {
 			for (var x = 0 ; x < size ; x++) {
 				for (var y = 0 ; y < size ; y++) {
@@ -792,10 +795,10 @@ var Sudoku = {
 			this.log_puzzle();
 
 		} else {
-			throw new Error("Simple groups are only possible if size is the square of an integer.");
+			throw new Error("Regular groups are only possible if size is the square of an integer.");
 		}
 	},
-	'make_complex': function() {
+	'make_irregular': function() {
 
 		var first_group_num = Math.floor(Math.random() * this.size);
 		var first_group = this.groups[first_group_num];
@@ -941,7 +944,7 @@ var Sudoku = {
 		walk_groups(remaining_groups, 0);
 
 	},
-	'make_complex_2': function() {
+	'make_irregular_2': function() {
 
 		if (this.group_sizes[this.size]) {
 
@@ -985,7 +988,7 @@ var Sudoku = {
 
 		} else {
 
-			// Not a simple map, fill in single group to start
+			// Not a regular map, fill in single group to start
 
 			var first_group_num = Math.floor(Math.random() * this.size);
 			var first_group = this.groups[first_group_num];
@@ -1090,6 +1093,13 @@ var Sudoku = {
 		for (var x=0 ; x < this.size; x++) {
 			for (var y=0 ; y < this.size; y++) {
 				this.cells[x][y].clear();
+			}
+		}
+	},
+	'empty': function() {
+		for (var x=0 ; x < this.size; x++) {
+			for (var y=0 ; y < this.size; y++) {
+				this.cells[x][y].value = null;
 			}
 		}
 	},
