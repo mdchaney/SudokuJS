@@ -798,21 +798,43 @@ var Sudoku = {
 			throw new Error("Regular groups are only possible if size is the square of an integer.");
 		}
 	},
+	'seed_puzzle': function() {
+
+		var initial_groups = new Array();
+
+		if (this.layout_style == 'regular' && this.size > 4) {
+
+			var xsize = this.group_sizes[this.size][0];
+			var ysize = this.group_sizes[this.size][1];
+
+			for (var i=0; i<Math.min(xsize,ysize); i++) {
+				initial_groups.push(this.groups[i*xsize+i]);
+			}
+		} else {
+			var first_group_num = Math.floor(Math.random() * this.size);
+			initial_groups.push(this.groups[first_group_num]);
+		}
+
+		// Fill initial groups - these groups have no cells in common
+		for (var i=0; i<initial_groups.length; i++) {
+			var this_group = initial_groups[i];
+
+			var group_fill = random_list(this.size);
+			for (var j=0; j<this.size; j++) {
+				this_group.cells[j].value = group_fill[j];
+			}
+		}
+
+	},
 	'make_irregular': function() {
 
-		var first_group_num = Math.floor(Math.random() * this.size);
-		var first_group = this.groups[first_group_num];
-
-		var group_fill = random_list(this.size);
-		for (var j=0; j<this.size; j++) {
-			first_group.cells[j].value = group_fill[j];
-		}
+		this.seed_puzzle();
 
 		// Put all groups in a list and shuffle them
 		var remaining_groups = [];
 
 		for (var i=0; i<this.size; i++) {
-			if (i != first_group_num) {
+			if (!this.groups[i].cells.every(function(cell) { return cell.value !== null; })) {
 				remaining_groups.push(this.groups[i])
 			}
 		}
@@ -944,74 +966,58 @@ var Sudoku = {
 		walk_groups(remaining_groups, 0);
 
 	},
-	'make_irregular_2': function() {
+	'make_irregular_random_cell_order': function() {
 
-		if (this.group_sizes[this.size]) {
+		this.seed_puzzle();
 
-			var xsize = this.group_sizes[this.size][0];
-			var ysize = this.group_sizes[this.size][1];
+		// Put all remaining cells in an array and shuffle them
 
-			var initial_groups = new Array();
+		var remaining_cells = new Array();
 
-			for (var i=0; i<Math.min(xsize,ysize); i++) {
-				initial_groups.push(i*xsize+i);
-			}
-
-			// Fill initial groups - these groups have no cells in common
-			for (var i=0; i<initial_groups.length; i++) {
-				var group_number = initial_groups[i];
-
-				var this_group = this.groups[group_number];
-
-				var group_fill = random_list(this.size);
-				for (var j=0; j<this.size; j++) {
-					this_group.cells[j].value = group_fill[j];
-				}
-			}
-
-			// Put all remaining cells in an array and shuffle them
-
-			var remaining_cells = [];
-
-			for (var i=0; i<this.size; i++) {
-				var found = false;
-				for (var j=0; j<initial_groups.length; j++) {
-					if (initial_groups[j]==i) {
-						found = true;
-						break;
-					}
-				}
-				if (!found) {
-					remaining_cells = remaining_cells.concat(this.groups[i].cells)
-				}
-			}
-
-		} else {
-
-			// Not a regular map, fill in single group to start
-
-			var first_group_num = Math.floor(Math.random() * this.size);
-			var first_group = this.groups[first_group_num];
-
-			// First, randomly fill the cells in one random group
-
-			var first_group_fill = random_list(this.size);
-			for (var i=0; i<this.size; i++) {
-				first_group.cells[i].value = first_group_fill[i];
-			}
-
-			// Put all remaining cells in an array and shuffle them
-
-			var remaining_cells = [];
-
-			for (var i=0; i<this.size; i++) {
-				if (i != first_group_num) {
-					remaining_cells = remaining_cells.concat(this.groups[i].cells)
+		for (var i=0; i<this.size; i++) {
+			for (var j=0; j<this.size; j++) {
+				if (this.cells[i][j].value === null) {
+					remaining_cells.push(this.cells[i][j]);
 				}
 			}
 		}
 
 		shuffle_array(remaining_cells);
+
+		function walk_puzzle(remaining_cells) {
+			if (remaining_cells.length == 0) return true;
+			var this_cell = remaining_cells.shift();
+			var order_to_try = random_list(this_cell.range);
+			for (var i=0; i<this_cell.range; i++) {
+				this_cell.value = null;
+				if (this_cell.may_set_to(order_to_try[i])) {
+					this_cell.value = order_to_try[i];
+					if (walk_puzzle(remaining_cells)) return true;
+				}
+			}
+			this_cell.value = null;
+			remaining_cells.unshift(this_cell);
+			return false;
+		}
+
+		walk_puzzle(remaining_cells);
+
+	},
+	'make_irregular_group_cell_order': function() {
+
+		this.seed_puzzle();
+
+		var remaining_cells = new Array();
+
+		var group_order = random_list(this.size);
+
+		for (var i=0; i<this.size; i++) {
+			for (var j=0; j<this.size; j++) {
+				if (this.groups[group_order[i]].cells[j].value === null) {
+					remaining_cells.push(this.groups[group_order[i]].cells[j]);
+				}
+			}
+		}
 
 		function walk_puzzle(remaining_cells) {
 			if (remaining_cells.length == 0) return true;
