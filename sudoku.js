@@ -359,34 +359,30 @@ var Sudoku = {
 		if (size < 4 || size > 25) {
 			throw new Error("Size must be at least 4 and no more than 25");
 		}
+		// setting up cells - the cells are set in the x,y grid (as
+		// referenced by the "cols" property) and all are stored in
+		// a 1D array called "cells".  Groups are not assigned at this
+		// point to cells, although they are created.
 		this.size = size;
-		this.cells = new Array(size)
-		for (var i = 0; i < size; i++) {
-			this.cells[i] = new Array(size);
-			for (var j = 0; j < size; j++) {
-				this.cells[i][j] = Object.create(Cell);
-				this.cells[i][j].init(this,i,j,size);
-			}
-		}
-		this.groups = new Array(size);
-		for (var i = 0; i < size; i++) {
-			this.groups[i] = Object.create(Group);
-			this.groups[i].init(this, i, size);
-		}
+		this.cells = new Array;
 		this.rows = new Array(size);
+		this.cols = new Array(size);
+		this.groups = new Array(size);
 		for (var i = 0; i < size; i++) {
 			this.rows[i] = Object.create(Row);
 			this.rows[i].init(this, i, size);
-			for (var j = 0; j < size; j++) {
-				this.rows[i].add_cell(this.cells[j][i],j);
-			}
-		}
-		this.cols = new Array(size);
-		for (var i = 0; i < size; i++) {
 			this.cols[i] = Object.create(Col);
 			this.cols[i].init(this, i, size);
+			this.groups[i] = Object.create(Group);
+			this.groups[i].init(this, i, size);
+		}
+		for (var i = 0; i < size; i++) {
 			for (var j = 0; j < size; j++) {
-				this.cols[i].add_cell(this.cells[i][j],j);
+				var cell = Object.create(Cell);
+				cell.init(this,i,j,size);
+				this.cells.push(cell);
+				this.rows[j].add_cell(cell,i);
+				this.cols[i].add_cell(cell,j);
 			}
 		}
 	},
@@ -635,11 +631,11 @@ var Sudoku = {
 		return recurse_group(this.group_map,this.size,0,0,0,1);
 	},
 	'gather_groups': function() {
-		for (i=0 ; i<this.size ; i++) {
-			for (j=0 ; j<this.size ; j++) {
+		for (var i=0 ; i<this.size ; i++) {
+			for (var j=0 ; j<this.size ; j++) {
 				var group_number = this.group_map[i][j];
 				if (group_number != null) {
-				this.groups[group_number].add_cell(this.cells[i][j]);
+					this.groups[group_number].add_cell(this.cols[i].cells[j]);
 				}
 			}
 		}
@@ -651,7 +647,7 @@ var Sudoku = {
 			for (var x = 0 ; x < this.size ; x++) {
 				for (var y = 0 ; y < this.size ; y++) {
 					var new_val = ((x % xsize) * ysize + Math.floor(x / xsize) + y) % this.size;
-					this.cells[x][y].value = new_val;
+					this.cols[x].cells[y].value = new_val;
 				}
 			}
 		} else {
@@ -692,22 +688,22 @@ var Sudoku = {
 			return shuffle_map;
 		}
 
-		function apply_shuffle_map(shuffle_map, cells, size) {
-			function walk_shuffle_map(shuffle_map, cells, x, y, val) {
+		function apply_shuffle_map(shuffle_map, cols, size) {
+			function walk_shuffle_map(shuffle_map, cols, x, y, val) {
 				var next_point = shuffle_map[x][y];
 				if (!next_point) {
 					debugger;
 				}
 				if (next_point[0] != x || next_point[1] != y) {
 					shuffle_map[x][y] = [x,y];
-					walk_shuffle_map(shuffle_map, cells, next_point[0], next_point[1], cells[x][y].value);
+					walk_shuffle_map(shuffle_map, cols, next_point[0], next_point[1], cols[x].cells[y].value);
 				}
-				if (val !== null) cells[x][y].value = val;
+				if (val !== null) cols[x].cells[y].value = val;
 			}
 
 			for (var x = 0 ; x < size ; x++) {
 				for (var y = 0 ; y < size ; y++) {
-					walk_shuffle_map(shuffle_map, cells, x, y, null);
+					walk_shuffle_map(shuffle_map, cols, x, y, null);
 				}
 			}
 		}
@@ -736,7 +732,7 @@ var Sudoku = {
 			}
 
 			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cells, this.size);
+			apply_shuffle_map(shuffle_map, this.cols, this.size);
 			shuffle_map = init_shuffle_map(this.size);
 
 			for (var ygroup=0; ygroup<ygroup_size; ygroup++) {
@@ -754,7 +750,7 @@ var Sudoku = {
 			}
 
 			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cells, this.size);
+			apply_shuffle_map(shuffle_map, this.cols, this.size);
 			shuffle_map = init_shuffle_map(this.size);
 
 			var new_xgroup_order = random_list(xgroup_size);
@@ -772,7 +768,7 @@ var Sudoku = {
 			}
 
 			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cells, this.size);
+			apply_shuffle_map(shuffle_map, this.cols, this.size);
 			shuffle_map = init_shuffle_map(this.size);
 
 			for (var xgroup=0; xgroup<xgroup_size; xgroup++) {
@@ -790,7 +786,7 @@ var Sudoku = {
 			}
 
 			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cells, this.size);
+			apply_shuffle_map(shuffle_map, this.cols, this.size);
 
 			this.log_puzzle();
 
@@ -974,11 +970,9 @@ var Sudoku = {
 
 		var remaining_cells = new Array();
 
-		for (var i=0; i<this.size; i++) {
-			for (var j=0; j<this.size; j++) {
-				if (this.cells[i][j].value === null) {
-					remaining_cells.push(this.cells[i][j]);
-				}
+		for (var i=0; i<this.size*this.size; i++) {
+			if (this.cells[i].value === null) {
+				remaining_cells.push(this.cells[i]);
 			}
 		}
 
@@ -1044,7 +1038,7 @@ var Sudoku = {
 			for (j=0 ; j<this.size ; j++) {
 				var row = $("<tr></tr>");
 				for (i=0 ; i<this.size ; i++) {
-					var cell = this.cells[i][j];
+					var cell = this.rows[j].cells[i];
 					var col = cell.display();
 					col.appendTo(row);
 				}
@@ -1055,59 +1049,45 @@ var Sudoku = {
 		}
 	},
 	'cell_at': function(x,y) {
-		return this.cells[x][y];
+		return this.cols[x].cells[y];
 	},
 	'show_markers': function() {
-		for (var x=0 ; x < this.size; x++) {
-			for (var y=0 ; y < this.size; y++) {
-				this.cells[x][y].show_marker();
-			}
+		for (var i=0 ; i < this.size*this.size; i++) {
+			this.cells[i].show_marker();
 		}
 	},
 	'reveal': function() {
-		for (var x=0 ; x < this.size; x++) {
-			for (var y=0 ; y < this.size; y++) {
-				this.cells[x][y].reveal();
-			}
+		for (var i=0 ; i < this.size*this.size; i++) {
+			this.cells[i].reveal();
 		}
 	},
 	'show_guesses': function() {
-		for (var x=0 ; x < this.size; x++) {
-			for (var y=0 ; y < this.size; y++) {
-				for (var guess=0 ; guess < this.size; guess++) {
-					this.cells[x][y].guesses[guess] = true;
-				}
-				this.cells[x][y].display_guesses();
+		for (var i=0 ; i < this.size*this.size; i++) {
+			for (var guess=0 ; guess < this.size; guess++) {
+				this.cells[i].guesses[guess] = true;
 			}
+			this.cells[i].display_guesses();
 		}
 	},
 	'find_conflicts': function() {
-		for (var x=0 ; x < this.size; x++) {
-			for (var y=0 ; y < this.size; y++) {
-				this.cells[x][y].find_conflicts();
-			}
+		for (var i=0 ; i < this.size*this.size; i++) {
+			this.cells[i].find_conflicts();
 		}
 	},
 	'reveal_conflicts': function() {
-		for (var x=0 ; x < this.size; x++) {
-			for (var y=0 ; y < this.size; y++) {
-				this.cells[x][y].reveal_conflicts();
-			}
+		for (var i=0 ; i < this.size*this.size; i++) {
+			this.cells[i].reveal_conflicts();
 		}
 	},
 	'clear': function() {
-		for (var x=0 ; x < this.size; x++) {
-			for (var y=0 ; y < this.size; y++) {
-				this.cells[x][y].clear();
-			}
+		for (var i=0 ; i < this.size*this.size; i++) {
+			this.cells[i].clear();
 		}
 	},
 	'empty': function() {
-		for (var x=0 ; x < this.size; x++) {
-			for (var y=0 ; y < this.size; y++) {
-				this.cells[x][y].value = null;
-				this.cells[x][y].clear();
-			}
+		for (var i=0 ; i < this.size*this.size; i++) {
+			this.cells[i].value = null;
+			this.cells[i].clear();
 		}
 	},
 	'log_puzzle': function() {
@@ -1116,35 +1096,35 @@ var Sudoku = {
 		var str2 = '    +';
 		for (var x=0 ; x < this.size; x++) {
 		   str += ('  '+x).substr(-3) + '  ';
-			var right_change = (x==this.size-1 || this.cells[x][0].group != this.cells[x+1][0].group);
+			var right_change = (x==this.size-1 || this.cols[x].cells[0].group != this.cols[x+1].cells[0].group);
 			str2 += '----';
 			str2 += right_change ? '+' : '-';
 		}
 		console.log(str);
 		console.log(str2);
 		for (var y=0 ; y < this.size; y++) {
-			var bottom_change = (y==this.size-1 || this.cells[0][y].group != this.cells[0][y+1].group);
+			var bottom_change = (y==this.size-1 || this.cols[0].cells[y].group != this.cols[0].cells[y+1].group);
 			var str = (' '+y).substr(-2) + ': | ';
 			var str2 = bottom_change ? '    +' : '    |';
 			for (var x=0 ; x < this.size; x++) {
-				var cell = this.cells[x][y];
+				var cell = this.cols[x].cells[y];
 				if (cell.value === null) {
 					str += ' _';
 				} else {
-					str += (' ' + this.cells[x][y].value).substr(-2);
+					str += (' ' + this.cols[x].cells[y].value).substr(-2);
 				}
 				if (x == this.size - 1) {
 					var bottom_change_next = false;
 				} else {
-					var bottom_change_next = (y==this.size-1 || this.cells[x+1][y].group != this.cells[x+1][y+1].group);
+					var bottom_change_next = (y==this.size-1 || this.cols[x+1].cells[y].group != this.cols[x+1].cells[y+1].group);
 				}
 				if (y == this.size - 1) {
 					var right_change_next = false;
 				} else {
-					var right_change_next = (x==this.size-1 || this.cells[x][y+1].group != this.cells[x+1][y+1].group);
+					var right_change_next = (x==this.size-1 || this.cols[x].cells[y+1].group != this.cols[x+1].cells[y+1].group);
 				}
-				var right_change = (x==this.size-1 || this.cells[x][y].group != this.cells[x+1][y].group);
-				var bottom_change = (y==this.size-1 || this.cells[x][y].group != this.cells[x][y+1].group);
+				var right_change = (x==this.size-1 || this.cols[x].cells[y].group != this.cols[x+1].cells[y].group);
+				var bottom_change = (y==this.size-1 || this.cols[x].cells[y].group != this.cols[x].cells[y+1].group);
 				str += right_change ? ' | ' : '   ';
 				if (bottom_change) {
 					str2 += '----';
@@ -1173,7 +1153,7 @@ var Sudoku = {
 			var reg;
 			// assignment on next line
 			if (reg=this.id.match(/group_(\d+)_(\d+)_cell_(\d+)_(\d+)/)) {
-				var cell=sudoku.groups[parseInt(reg[1])][parseInt(reg[2])].cells[parseInt(reg[3])][parseInt(reg[4])];
+				var cell=sudoku.groups[parseInt(reg[1])][parseInt(reg[2])].cols[parseInt(reg[3])].cells[parseInt(reg[4])];
 				if (cell) {
 					if (event.shiftKey) {
 						cell.display_guess(sudoku.current_number);
