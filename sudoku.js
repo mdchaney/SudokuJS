@@ -1118,7 +1118,7 @@ var Sudoku = {
 		walk_puzzle(remaining_cells);
 
 	},
-	'display': function(div_id) {
+	'display': function(containing_div_id) {
 		if (this.size) {
 			var table = $('<table class="sudoku"></table>');
 			for (j=0 ; j<this.size ; j++) {
@@ -1131,7 +1131,7 @@ var Sudoku = {
 				row.appendTo(table);
 			}
 			this.element = table;
-			table.appendTo($(div_id));
+			table.appendTo($(containing_div_id));
 		}
 	},
 	'display_group_colors': function() {
@@ -1229,7 +1229,7 @@ var Sudoku = {
 			console.log(str2);
 		}
 	},
-	'create_controls': function(div_id) {
+	'create_controls': function(containing_div_id) {
 		for (var i=0 ; i<size ; i++) {
 			$('<a href="#" id="choose_' + i + '" class="chooser">' + Cell.display_values[i] + '</a>').appendTo('div#controls');
 			$('#choose_'+i).click(this.handle_number_click);
