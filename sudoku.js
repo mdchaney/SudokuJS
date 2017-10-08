@@ -58,7 +58,6 @@ var Cell = {
 	'x': null,
 	'y': null,
 	'range': null,
-	'div_id': null,
 	'div': null,
 	'value': null,
 	'showing': null,
@@ -72,9 +71,11 @@ var Cell = {
 		this.x = x;
 		this.y = y;
 		this.range = range;
-		this.div_id = "cell_" + x + "_" + y;
 		this.guesses = new Array(range);
 		this.guess_rows = Math.ceil(Math.sqrt(range));
+	},
+	'div_id': function() {
+		return "cell_" + this.x + "_" + this.y;
 	},
 	'set_group': function(group) {
 		this.group = group;
@@ -130,7 +131,7 @@ var Cell = {
 		return null;
 	},
 	'display': function() {
-		var td= $("<td id='" + this.div_id + "'></td>").addClass('cell').addClass('x_'+this.x).addClass('y_'+this.y).addClass('group_'+this.group.id);
+		var td= $("<td id='" + this.div_id() + "'></td>").addClass('cell').addClass('x_'+this.x).addClass('y_'+this.y).addClass('group_'+this.group.id);
 		if (this.group.color !== null) {
 			td.addClass('color_' + this.group.color);
 		}
@@ -151,11 +152,11 @@ var Cell = {
 	},
 	'show_marker': function() {
 		var marker = '' + this.group.id + "/" + this.x + "," + this.y;
-		$('#' + this.div_id).text(marker);
+		$('#' + this.div_id()).text(marker);
 	},
 	'clear': function() {
 		this.showing = null;
-		$('#'+this.div_id+' *').remove();
+		$('#'+this.div_id()+' *').remove();
 	},
 	'set_color': function(color) {
 		this.div.removeClass('color_0').removeClass('color_1').removeClass('color_2').removeClass('color_3').addClass('color_'+color);
@@ -168,7 +169,7 @@ var Cell = {
 		}
 	},
 	'guess_div_id': function(guess) {
-		return this.div_id + '_guess_' + guess;
+		return this.div_id() + '_guess_' + guess;
 	},
 	'display_guess': function(guess) {
 		if (this.showing!==null && this.showing!=='guess') this.clear();
@@ -195,13 +196,14 @@ var Cell = {
 		} else {
 			guess_div.css('left', '' + (cell_width * guess_col / (this.guess_rows-1) - guess_width/2.0 + pixel_padding) + 'px');
 		}
-		guess_div.appendTo('#'+this.div_id);
+		guess_div.appendTo('#'+this.div_id());
 	},
 	'reveal': function() {
 		if (this.value!==null && this.showing!=='answer') {
 			this.clear();
 			this.showing = 'answer';
-			$('<span class="revealed value">' + this.display_values[this.value] + '</span>').appendTo('#'+this.div_id)
+			$('<span class="revealed value">' +
+			this.display_values[this.value] + '</span>').appendTo('#'+this.div_id())
 		}
 	},
 	'set_value': function(answer) {
