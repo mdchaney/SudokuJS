@@ -427,13 +427,13 @@ var Sudoku = {
 			this.groups[i] = Object.create(Group);
 			this.groups[i].init(this, i, size);
 		}
-		for (var i = 0; i < size; i++) {
-			for (var j = 0; j < size; j++) {
+		for (var x = 0; x < size; x++) {
+			for (var y = 0; y < size; y++) {
 				var cell = Object.create(Cell);
-				cell.init(this,i,j,size);
+				cell.init(this,x,y,size);
 				this.cells.push(cell);
-				this.rows[j].add_cell(cell,i);
-				this.cols[i].add_cell(cell,j);
+				this.rows[y].add_cell(cell,x);
+				this.cols[x].add_cell(cell,y);
 			}
 		}
 	},
