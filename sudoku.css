@@ -72,11 +72,11 @@ table.sudoku td.color_0 {
 	background-color: transparent;
 }
 table.sudoku td.color_1 {
-	background-color: #ddf;
+	background-color: #eef;
 }
 table.sudoku td.color_2 {
-	background-color: #dfd;
+	background-color: #efe;
 }
 table.sudoku td.color_3 {
-	background-color: #fdd;
+	background-color: #fee;
 }
