@@ -68,3 +68,15 @@ table.sudoku td.rdiff {
 table.sudoku td.conflict {
 	color: red;
 }
+table.sudoku td.color_0 {
+	background-color: transparent;
+}
+table.sudoku td.color_1 {
+	background-color: #ddf;
+}
+table.sudoku td.color_2 {
+	background-color: #dfd;
+}
+table.sudoku td.color_3 {
+	background-color: #fdd;
+}

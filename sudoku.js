@@ -85,6 +85,39 @@ var Cell = {
 	'set_col': function(col) {
 		this.col = col;
 	},
+	'left_neighbor': function() {
+		if (this.x > 0) {
+			return this.row.cells[this.x-1];
+		} else {
+			return undefined;
+		}
+	},
+	'right_neighbor': function() {
+		if (this.x < this.row.size) {
+			return this.row.cells[this.x+1];
+		} else {
+			return undefined;
+		}
+	},
+	'upper_neighbor': function() {
+		if (this.y > 0) {
+			return this.col.cells[this.y-1];
+		} else {
+			return undefined;
+		}
+	},
+	'lower_neighbor': function() {
+		if (this.y < this.col.size) {
+			return this.col.cells[this.y+1];
+		} else {
+			return undefined;
+		}
+	},
+	'neighbors': function() {
+		// The filter will remove "undefined" and leave only actual cells
+		var ret = new Array(this.upper_neighbor(), this.right_neighbor(), this.lower_neighbor(), this.left_neighbor());
+		return ret.filter(function(cell) { return cell; });
+	},
 	'set_value': function(value) {
 		this.value = value;
 	},
@@ -98,6 +131,9 @@ var Cell = {
 	},
 	'display': function() {
 		var td= $("<td id='" + this.div_id + "'></td>").addClass('cell').addClass('x_'+this.x).addClass('y_'+this.y).addClass('group_'+this.group.id);
+		if (this.group.color !== null) {
+			td.addClass('color_' + this.group.color);
+		}
 		if (this.x == 0 || this.row.cells[this.x-1].group != this.group) {
 			td.addClass('ldiff');
 		}
@@ -120,6 +156,9 @@ var Cell = {
 	'clear': function() {
 		this.showing = null;
 		$('#'+this.div_id+' *').remove();
+	},
+	'set_color': function(color) {
+		this.div.removeClass('color_0').removeClass('color_1').removeClass('color_2').removeClass('color_3').addClass('color_'+color);
 	},
 	'display_guesses': function() {
 		this.clear();
@@ -255,6 +294,7 @@ var Group = {
 	'size': null,
 	'id': null,
 	'cells': null,
+	'color': null,
 	'init': function(puzzle,id,size) {
 		this.puzzle = puzzle;
 		this.id = id;
@@ -267,6 +307,17 @@ var Group = {
 	},
 	'cell_at': function(pos) {
 		return this.cells[pos];
+	},
+	'set_color': function(color_number) {
+		this.color = color_number;
+	},
+	'clear_color': function() {
+		this.set_color(null);
+	},
+	'color_cells': function() {
+		for (var i=0; i<this.size; i++) {
+			this.cells[i].set_color(this.color);
+		}
 	},
 	'already_contains': function(val) {
 		for (var i=0; i<this.size; i++) {
@@ -629,6 +680,39 @@ var Sudoku = {
 		}
 
 		return recurse_group(this.group_map,this.size,0,0,0,1);
+	},
+	'color_groups': function() {
+		for (var i=0; i<this.size; i++) {
+			this.groups[i].clear_color();
+		}
+
+		function try_colors(groups, size, group_number) {
+			if (group_number >= size) { return true; }
+			var group = groups[group_number];
+			for (var color=0; color<4; color++) {
+				// if any cell touching this one is in a different group and
+				// has the color, skip to the next color
+				var found_color_in_neighbor = false;
+				for (var i=0; i<size; i++) {
+					if (group.cells[i].neighbors().some(function(neighbor_cell) {
+						return neighbor_cell.group != group &&
+								neighbor_cell.group.color !== null &&
+								neighbor_cell.group.color == color;
+							})) {
+						found_color_in_neighbor = true;
+						break;
+					}
+				}
+				if (!found_color_in_neighbor) {
+					group.set_color(color);
+					if (try_colors(groups, size, group_number+1)) { return true; }
+				}
+			}
+			group.clear_color();
+			return false;
+		}
+
+		try_colors(this.groups, this.size, 0);
 	},
 	'gather_groups': function() {
 		for (var i=0 ; i<this.size ; i++) {
@@ -1046,6 +1130,11 @@ var Sudoku = {
 			}
 			this.element = table;
 			table.appendTo($(div_id));
+		}
+	},
+	'display_group_colors': function() {
+		for (var i=0; i<this.size; i++) {
+			this.groups[i].color_cells();
 		}
 	},
 	'cell_at': function(x,y) {
