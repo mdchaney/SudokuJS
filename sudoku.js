@@ -66,13 +66,11 @@ var Cell = {
 	'guess_rows': null,
 	'conflicts': null,
 	'display_values': ['1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','0'],
-	'init': function(puzzle, x, y, range) {
+	'init': function(puzzle) {
 		this.puzzle = puzzle;
-		this.x = x;
-		this.y = y;
-		this.range = range;
-		this.guesses = new Array(range);
-		this.guess_rows = Math.ceil(Math.sqrt(range));
+		this.range = puzzle.size;
+		this.guesses = new Array(this.range);
+		this.guess_rows = Math.ceil(Math.sqrt(this.range));
 	},
 	'div_id': function() {
 		return "cell_" + this.x + "_" + this.y;
@@ -82,9 +80,11 @@ var Cell = {
 	},
 	'set_row': function(row) {
 		this.row = row;
+		this.y = row.id;
 	},
 	'set_col': function(col) {
 		this.col = col;
+		this.x = col.id;
 	},
 	'left_neighbor': function() {
 		if (this.x > 0) {
@@ -432,7 +432,7 @@ var Sudoku = {
 		for (var x = 0; x < size; x++) {
 			for (var y = 0; y < size; y++) {
 				var cell = Object.create(Cell);
-				cell.init(this,x,y,size);
+				cell.init(this);
 				this.cells.push(cell);
 				this.rows[y].add_cell(cell,x);
 				this.cols[x].add_cell(cell,y);
