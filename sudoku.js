@@ -1117,6 +1117,74 @@ var Sudoku = {
 		walk_puzzle(remaining_cells);
 
 	},
+	'rotate_puzzle_clockwise': function(degrees) {
+
+		// Each shuffle map element is an x,y pair
+		// of where that cell needs to move to
+		var shuffle_map = new Array(this.size);
+		for (var x=0; x<this.size; x++) {
+			shuffle_map[x] = new Array(this.size);
+		}
+
+		if (degrees == 90 || degrees == -270) {
+			// for a 90 degree turn, y is the old x value, x is size - old y - 1
+			for (var x=0; x<this.size; x++) {
+				for (var y=0; y<this.size; y++) {
+					shuffle_map[x][y] = [ this.size - y - 1, x ];
+				}
+			}
+		} else if (degrees == 180 || degrees == -180) {
+			// for a 180 degree turn, x = size - old x - 1, y = size - old y - 1
+			for (var x=0; x<this.size; x++) {
+				for (var y=0; y<this.size; y++) {
+					shuffle_map[x][y] = [ this.size - x - 1, this.size - y - 1 ];
+				}
+			}
+		} else if (degrees == -90 || degrees == 270) {
+			// for a -90 degree turn, x is the old y value, y is size - old x - 1
+			for (var x=0; x<this.size; x++) {
+				for (var y=0; y<this.size; y++) {
+					shuffle_map[x][y] = [ y, this.size - x - 1 ];
+				}
+			}
+		}
+
+		function show_shuffle_map(shuffle_map, size) {
+			console.log("map:")
+			for (var y = 0 ; y < size ; y++) {
+				var map_line = '' + y + ': ';
+				for (var x = 0 ; x < size ; x++) {
+					map_line += ("[" + shuffle_map[x][y][0] + "," + shuffle_map[x][y][1] + "] ");
+				}
+				console.log(map_line);
+			}
+		}
+
+		show_shuffle_map(shuffle_map, this.size);
+
+		var old_cols = this.cols;
+
+		// Make new rows & cols, move cells to new positions there
+		this.rows = new Array(this.size);
+		this.cols = new Array(this.size);
+		for (var i = 0; i < this.size; i++) {
+			this.rows[i] = Object.create(Row);
+			this.rows[i].init(this, i, this.size);
+			this.cols[i] = Object.create(Col);
+			this.cols[i].init(this, i, this.size);
+		}
+
+		for (var x = 0; x < this.size; x++) {
+			for (var y = 0; y < this.size; y++) {
+				var cell = old_cols[x].cells[y];
+				cell.showing = null;
+				new_x = shuffle_map[x][y][0];
+				new_y = shuffle_map[x][y][1];
+				this.rows[new_y].add_cell(cell,new_x);
+				this.cols[new_x].add_cell(cell,new_y);
+			}
+		}
+	},
 	'display': function(containing_div_id) {
 		if (this.size) {
 			var table = $('<table class="sudoku"></table>');
