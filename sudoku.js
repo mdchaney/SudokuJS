@@ -152,11 +152,11 @@ var Cell = {
 	},
 	'show_marker': function() {
 		var marker = '' + this.group.id + "/" + this.x + "," + this.y;
-		$('#' + this.div_id()).text(marker);
+		$(this.div).text(marker);
 	},
 	'clear': function() {
 		this.showing = null;
-		$('#'+this.div_id()+' *').remove();
+		$('*',this.div).remove();
 	},
 	'set_color': function(color) {
 		this.div.removeClass('color_0').removeClass('color_1').removeClass('color_2').removeClass('color_3').addClass('color_'+color);
@@ -196,14 +196,13 @@ var Cell = {
 		} else {
 			guess_div.css('left', '' + (cell_width * guess_col / (this.guess_rows-1) - guess_width/2.0 + pixel_padding) + 'px');
 		}
-		guess_div.appendTo('#'+this.div_id());
+		guess_div.appendTo(this.div);
 	},
 	'reveal': function() {
 		if (this.value!==null && this.showing!=='answer') {
 			this.clear();
 			this.showing = 'answer';
-			$('<span class="revealed value">' +
-			this.display_values[this.value] + '</span>').appendTo('#'+this.div_id())
+			$('<span class="revealed value">' + this.display_values[this.value] + '</span>').appendTo(this.div);
 		}
 	},
 	'set_value': function(answer) {
