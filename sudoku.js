@@ -751,55 +751,13 @@ var Sudoku = {
 			}
 		}
 
-		function show_shuffle_map(shuffle_map, size) {
-			console.log("map:")
-			for (var y = 0 ; y < size ; y++) {
-				var map_line = '' + y + ': ';
-				for (var x = 0 ; x < size ; x++) {
-					map_line += ("[" + shuffle_map[x][y][0] + "," + shuffle_map[x][y][1] + "] ");
-				}
-				console.log(map_line);
-			}
-		}
-
-		function init_shuffle_map(size) {
-			var shuffle_map = new Array(size);
-			for (var x = 0 ; x < size ; x++) {
-				shuffle_map[x] = new Array(size);
-				for (var y = 0 ; y < size ; y++) {
-					shuffle_map[x][y] = [x,y];
-				}
-			}
-			return shuffle_map;
-		}
-
-		function apply_shuffle_map(shuffle_map, cols, size) {
-			function walk_shuffle_map(shuffle_map, cols, x, y, val) {
-				var next_point = shuffle_map[x][y];
-				if (!next_point) {
-					debugger;
-				}
-				if (next_point[0] != x || next_point[1] != y) {
-					shuffle_map[x][y] = [x,y];
-					walk_shuffle_map(shuffle_map, cols, next_point[0], next_point[1], cols[x].cells[y].value);
-				}
-				if (val !== null) cols[x].cells[y].value = val;
-			}
-
-			for (var x = 0 ; x < size ; x++) {
-				for (var y = 0 ; y < size ; y++) {
-					walk_shuffle_map(shuffle_map, cols, x, y, null);
-				}
-			}
-		}
-
 		if (this.group_sizes[this.size]) {
 			var xsize = this.group_sizes[this.size][0];
 			var ysize = this.group_sizes[this.size][1];
 			var xgroup_size = ysize;
 			var ygroup_size = xsize;
 
-			var shuffle_map = init_shuffle_map(this.size);
+			var shuffle_map = this.null_shuffle_map();
 			debug_if_out_of_bounds(shuffle_map, this.size);
 
 			// choose new row order for each group row
@@ -816,9 +774,10 @@ var Sudoku = {
 				}
 			}
 
-			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cols, this.size);
-			shuffle_map = init_shuffle_map(this.size);
+			//this.log_shuffle_map(shuffle_map);
+			this.apply_shuffle_map(shuffle_map);
+
+			shuffle_map = this.null_shuffle_map();
 
 			for (var ygroup=0; ygroup<ygroup_size; ygroup++) {
 				var new_y_order = random_list(ysize);
@@ -834,9 +793,10 @@ var Sudoku = {
 				debug_if_out_of_bounds(shuffle_map, this.size);
 			}
 
-			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cols, this.size);
-			shuffle_map = init_shuffle_map(this.size);
+			//this.log_shuffle_map(shuffle_map);
+			this.apply_shuffle_map(shuffle_map);
+
+			shuffle_map = this.null_shuffle_map();
 
 			var new_xgroup_order = random_list(xgroup_size);
 			for (var xgroup=0; xgroup<xgroup_size; xgroup++) {
@@ -852,9 +812,10 @@ var Sudoku = {
 				debug_if_out_of_bounds(shuffle_map, this.size);
 			}
 
-			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cols, this.size);
-			shuffle_map = init_shuffle_map(this.size);
+			//this.log_shuffle_map(shuffle_map);
+			this.apply_shuffle_map(shuffle_map);
+
+			shuffle_map = this.null_shuffle_map();
 
 			for (var xgroup=0; xgroup<xgroup_size; xgroup++) {
 				var new_x_order = random_list(xsize);
@@ -870,10 +831,10 @@ var Sudoku = {
 				debug_if_out_of_bounds(shuffle_map, this.size);
 			}
 
-			//show_shuffle_map(shuffle_map, this.size);
-			apply_shuffle_map(shuffle_map, this.cols, this.size);
+			//this.log_shuffle_map(shuffle_map);
+			this.apply_shuffle_map(shuffle_map);
 
-			this.log_puzzle();
+			//this.log_puzzle();
 
 		} else {
 			throw new Error("Regular groups are only possible if size is the square of an integer.");
@@ -1145,7 +1106,6 @@ var Sudoku = {
 		}
 
 		//this.log_shuffle_map(shuffle_map);
-
 		this.apply_shuffle_map(shuffle_map);
 	},
 	'flip_puzzle': function(axis) {
@@ -1199,6 +1159,16 @@ var Sudoku = {
 		}
 		return shuffle_map;
 	},
+	'null_shuffle_map': function() {
+		var shuffle_map = new Array(this.size);
+		for (var x = 0 ; x < this.size ; x++) {
+			shuffle_map[x] = new Array(this.size);
+			for (var y = 0 ; y < this.size ; y++) {
+				shuffle_map[x][y] = [x,y];
+			}
+		}
+		return shuffle_map;
+	},
 	'apply_shuffle_map': function(shuffle_map) {
 
 		var old_cols = this.cols;
@@ -1217,8 +1187,8 @@ var Sudoku = {
 			for (var y = 0; y < this.size; y++) {
 				var cell = old_cols[x].cells[y];
 				cell.showing = null;
-				new_x = shuffle_map[x][y][0];
-				new_y = shuffle_map[x][y][1];
+				var new_x = shuffle_map[x][y][0];
+				var new_y = shuffle_map[x][y][1];
 				this.rows[new_y].add_cell(cell,new_x);
 				this.cols[new_x].add_cell(cell,new_y);
 			}
