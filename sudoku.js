@@ -1149,18 +1149,11 @@ var Sudoku = {
 			}
 		}
 
-		function show_shuffle_map(shuffle_map, size) {
-			console.log("map:")
-			for (var y = 0 ; y < size ; y++) {
-				var map_line = '' + y + ': ';
-				for (var x = 0 ; x < size ; x++) {
-					map_line += ("[" + shuffle_map[x][y][0] + "," + shuffle_map[x][y][1] + "] ");
-				}
-				console.log(map_line);
-			}
-		}
+		//this.show_shuffle_map(shuffle_map);
 
-		show_shuffle_map(shuffle_map, this.size);
+		this.apply_shuffle_map(shuffle_map);
+	},
+	'apply_shuffle_map': function(shuffle_map) {
 
 		var old_cols = this.cols;
 
@@ -1183,6 +1176,16 @@ var Sudoku = {
 				this.rows[new_y].add_cell(cell,new_x);
 				this.cols[new_x].add_cell(cell,new_y);
 			}
+		}
+	},
+	'show_shuffle_map': function(shuffle_map) {
+		console.log("map:")
+		for (var y = 0 ; y < this.size ; y++) {
+			var map_line = '' + y + ': ';
+			for (var x = 0 ; x < this.size ; x++) {
+				map_line += ("[" + shuffle_map[x][y][0] + "," + shuffle_map[x][y][1] + "] ");
+			}
+			console.log(map_line);
 		}
 	},
 	'display': function(containing_div_id) {
