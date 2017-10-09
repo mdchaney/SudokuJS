@@ -1148,6 +1148,48 @@ var Sudoku = {
 
 		this.apply_shuffle_map(shuffle_map);
 	},
+	'flip_puzzle': function(axis) {
+		// axis is a multiple of 45 degrees, with 0 being "vertical".
+		// There are really only 4 values - 0, 45, 90, and 135:
+		// 0 - vertical axis
+		// 45 - northeast/southwest axis
+		// 90 - horizontal axis
+		// 135 - southeast/northwest axis
+
+		var shuffle_map = this.blank_shuffle_map();
+
+		if (axis == 0) {
+			// vertical axis flip - y is same, x is size - x - 1
+			for (var x=0; x<this.size; x++) {
+				for (var y=0; y<this.size; y++) {
+					shuffle_map[x][y] = [ this.size - x - 1, y ];
+				}
+			}
+		} else if (axis == 45) {
+			// northeast/southwest axis flip - y is size - x - 1, x is size - y - 1
+			for (var x=0; x<this.size; x++) {
+				for (var y=0; y<this.size; y++) {
+					shuffle_map[x][y] = [ this.size - y - 1, this.size - x - 1 ];
+				}
+			}
+		} else if (axis == 90) {
+			// horizontal axis flip - x is same, y is size - y - 1
+			for (var x=0; x<this.size; x++) {
+				for (var y=0; y<this.size; y++) {
+					shuffle_map[x][y] = [ x, this.size - y - 1 ];
+				}
+			}
+		} else if (axis == 135) {
+			// southeast/northwest axis flip - x is y and y is x
+			for (var x=0; x<this.size; x++) {
+				for (var y=0; y<this.size; y++) {
+					shuffle_map[x][y] = [ y, x ];
+				}
+			}
+		}
+
+		this.apply_shuffle_map(shuffle_map);
+	},
 	'blank_shuffle_map': function() {
 		// Each shuffle map element is an x,y pair
 		// of where that cell needs to move to
