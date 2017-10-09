@@ -1119,12 +1119,7 @@ var Sudoku = {
 	},
 	'rotate_puzzle_clockwise': function(degrees) {
 
-		// Each shuffle map element is an x,y pair
-		// of where that cell needs to move to
-		var shuffle_map = new Array(this.size);
-		for (var x=0; x<this.size; x++) {
-			shuffle_map[x] = new Array(this.size);
-		}
+		var shuffle_map = this.blank_shuffle_map();
 
 		if (degrees == 90 || degrees == -270) {
 			// for a 90 degree turn, y is the old x value, x is size - old y - 1
@@ -1152,6 +1147,15 @@ var Sudoku = {
 		//this.show_shuffle_map(shuffle_map);
 
 		this.apply_shuffle_map(shuffle_map);
+	},
+	'blank_shuffle_map': function() {
+		// Each shuffle map element is an x,y pair
+		// of where that cell needs to move to
+		var shuffle_map = new Array(this.size);
+		for (var x=0; x<this.size; x++) {
+			shuffle_map[x] = new Array(this.size);
+		}
+		return shuffle_map;
 	},
 	'apply_shuffle_map': function(shuffle_map) {
 
