@@ -44,6 +44,27 @@
 				sudoku.display('#sudoku');
 				sudoku.reveal();
 			}
+			function rotate_puzzle_cw(angle) {
+				$('#sudoku *').remove();
+				sudoku.rotate_puzzle_clockwise(angle);
+				sudoku.display('#sudoku');
+				sudoku.reveal();
+			}
+			function flip_puzzle(axis) {
+				$('#sudoku *').remove();
+				if (axis=='|') {
+					axis = 0;
+				} else if (axis=='/') {
+					axis = 45;
+				} else if (axis=='-') {
+					axis = 90;
+				} else if (axis=='\\') {
+					axis = 135;
+				}
+				sudoku.flip_puzzle(axis);
+				sudoku.display('#sudoku');
+				sudoku.reveal();
+			}
 			//]]>
 		</script>
 	</head>
@@ -83,6 +104,12 @@
 					<option value="16">16</option>
 				</select>
 				<button onClick="setup_irregular_puzzle();">Resize Irregular</button>
+				<button onClick="rotate_puzzle_cw(-90);">CCW 90</button>
+				<button onClick="rotate_puzzle_cw(90);">CW 90</button>
+				<button onClick="flip_puzzle('|');">|</button>
+				<button onClick="flip_puzzle('/');">/</button>
+				<button onClick="flip_puzzle('-');">-</button>
+				<button onClick="flip_puzzle('\\');">\</button>
 				<button onClick="sudoku.empty(); sudoku.reveal();">Clear</button>
 			</div>
 			<div id="sudoku" class="sudoku">
