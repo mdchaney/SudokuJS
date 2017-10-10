@@ -775,7 +775,7 @@ var Sudoku = {
 			}
 
 			//this.log_shuffle_map(shuffle_map);
-			this.apply_shuffle_map(shuffle_map);
+			this.apply_shuffle_map_to_values(shuffle_map);
 
 			shuffle_map = this.null_shuffle_map();
 
@@ -794,7 +794,7 @@ var Sudoku = {
 			}
 
 			//this.log_shuffle_map(shuffle_map);
-			this.apply_shuffle_map(shuffle_map);
+			this.apply_shuffle_map_to_values(shuffle_map);
 
 			shuffle_map = this.null_shuffle_map();
 
@@ -813,7 +813,7 @@ var Sudoku = {
 			}
 
 			//this.log_shuffle_map(shuffle_map);
-			this.apply_shuffle_map(shuffle_map);
+			this.apply_shuffle_map_to_values(shuffle_map);
 
 			shuffle_map = this.null_shuffle_map();
 
@@ -832,7 +832,7 @@ var Sudoku = {
 			}
 
 			//this.log_shuffle_map(shuffle_map);
-			this.apply_shuffle_map(shuffle_map);
+			this.apply_shuffle_map_to_values(shuffle_map);
 
 			//this.log_puzzle();
 
@@ -1106,7 +1106,7 @@ var Sudoku = {
 		}
 
 		//this.log_shuffle_map(shuffle_map);
-		this.apply_shuffle_map(shuffle_map);
+		this.apply_shuffle_map_to_cells(shuffle_map);
 	},
 	'flip_puzzle': function(axis) {
 		// axis is a multiple of 45 degrees, with 0 being "vertical".
@@ -1148,7 +1148,7 @@ var Sudoku = {
 			}
 		}
 
-		this.apply_shuffle_map(shuffle_map);
+		this.apply_shuffle_map_to_cells(shuffle_map);
 	},
 	'blank_shuffle_map': function() {
 		// Each shuffle map element is an x,y pair
@@ -1169,7 +1169,7 @@ var Sudoku = {
 		}
 		return shuffle_map;
 	},
-	'apply_shuffle_map': function(shuffle_map) {
+	'apply_shuffle_map_to_cells': function(shuffle_map) {
 
 		var old_cols = this.cols;
 
@@ -1191,6 +1191,24 @@ var Sudoku = {
 				var new_y = shuffle_map[x][y][1];
 				this.rows[new_y].add_cell(cell,new_x);
 				this.cols[new_x].add_cell(cell,new_y);
+			}
+		}
+	},
+	'apply_shuffle_map_to_values': function(shuffle_map) {
+
+		function walk_shuffle_map(shuffle_map, cols, x, y, val) {
+			var next_point = shuffle_map[x][y];
+			if (!next_point) { debugger; }
+			if (next_point[0] != x || next_point[1] != y) {
+				shuffle_map[x][y] = [x,y];
+ 				walk_shuffle_map(shuffle_map, cols, next_point[0], next_point[1], cols[x].cells[y].value);
+			}
+			if (val !== null) cols[x].cells[y].value = val;
+		}
+
+		for (var x = 0 ; x < this.size ; x++) {
+			for (var y = 0 ; y < this.size ; y++) {
+				walk_shuffle_map(shuffle_map, this.cols, x, y, null);
 			}
 		}
 	},
