@@ -80,3 +80,7 @@ table.sudoku td.color_2 {
 table.sudoku td.color_3 {
 	background-color: #fee;
 }
+table.sudoku td input {
+	font-size: 14px;
+	text-align: center;
+}

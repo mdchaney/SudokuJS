@@ -130,7 +130,7 @@ var Cell = {
 		}
 		return null;
 	},
-	'display': function() {
+	'display': function(reveal) {
 		var td= $("<td id='" + this.div_id() + "'></td>").addClass('cell').addClass('x_'+this.x).addClass('y_'+this.y).addClass('group_'+this.group.id);
 		if (this.group.color !== null) {
 			td.addClass('color_' + this.group.color);
@@ -148,6 +148,7 @@ var Cell = {
 			td.addClass('bdiff');
 		}
 		this.div = td;
+		if (reveal) this.reveal();
 		return td;
 	},
 	'show_marker': function() {
@@ -199,8 +200,8 @@ var Cell = {
 		guess_div.appendTo(this.div);
 	},
 	'reveal': function() {
+		this.clear();
 		if (this.value!==null && this.showing!=='answer') {
-			this.clear();
 			this.showing = 'answer';
 			$('<span class="revealed value">' + this.display_values[this.value] + '</span>').appendTo(this.div);
 		}
@@ -1228,14 +1229,52 @@ var Sudoku = {
 			console.log(map_line);
 		}
 	},
-	'display': function(containing_div_id) {
+	'show_all_solutions': function(display_function) {
+		// This is a simple BFI solver, shows all possible solutions
+
+		var remaining_cells = new Array();
+		var puzzle = this;
+
+		var group_order = random_list(this.size);
+
+		for (var i=0; i<this.size; i++) {
+			for (var j=0; j<this.size; j++) {
+				if (this.groups[group_order[i]].cells[j].value === null) {
+					remaining_cells.push(this.groups[group_order[i]].cells[j]);
+				}
+			}
+		}
+
+		function walk_puzzle(remaining_cells, cell_number) {
+			if (cell_number >= remaining_cells.length) {
+				// solution
+				display_function(puzzle);
+			} else {
+				var this_cell = remaining_cells[cell_number];
+				var order_to_try = random_list(this_cell.range);
+				for (var i=0; i<this_cell.range; i++) {
+					this_cell.value = null;
+					if (this_cell.may_set_to(order_to_try[i])) {
+						this_cell.value = order_to_try[i];
+						walk_puzzle(remaining_cells, cell_number+1);
+					}
+				}
+				this_cell.value = null;
+				// no solution found, drop back and try next value
+			}
+		}
+
+		walk_puzzle(remaining_cells,0);
+
+	},
+	'display': function(containing_div_id, reveal) {
 		if (this.size) {
 			var table = $('<table class="sudoku"></table>');
 			for (j=0 ; j<this.size ; j++) {
 				var row = $("<tr></tr>");
 				for (i=0 ; i<this.size ; i++) {
 					var cell = this.rows[j].cells[i];
-					var col = cell.display();
+					var col = cell.display(reveal);
 					col.appendTo(row);
 				}
 				row.appendTo(table);
@@ -1337,6 +1376,24 @@ var Sudoku = {
 			}
 			console.log(str);
 			console.log(str2);
+		}
+	},
+	'setup_inputs': function() {
+		for (var i=0; i<this.size*this.size; i++) {
+			var cell = this.cells[i];
+			var val = cell.val;
+			if (val === undefined || val === null) val='';
+			var input = $('<input size="2" maxlength="2" type="text" value="' + val + '" />');
+			input.appendTo(cell.div);
+		}
+	},
+	'read_inputs': function() {
+		for (var i=0; i<this.size*this.size; i++) {
+			var cell = this.cells[i];
+			var value = cell.value_from_display(cell.div.find('input').val());
+			if (value !== null) {
+				cell.value = value;
+			}
 		}
 	},
 	'create_controls': function(containing_div_id) {
