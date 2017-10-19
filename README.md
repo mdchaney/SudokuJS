@@ -4,8 +4,7 @@ Sudoku
 Released under terms of MIT License.
 
 Javascript version of Sudoku - intend to make this a full-fledged game
-with capability to generate random puzzles and self-solve (i.e. enter an
-existing puzzle and see solution).
+with capability to generate random puzzles.
 
 Requires jquery.
 
@@ -22,6 +21,7 @@ Right now the code has the ability to:
 4. Create a more complex puzzle for a irregular boards
 5. Show pencil marks
 6. Find and highlight conflicts
+7. Enter an existing puzzle and see the solution (or set of solutions)
 
 
 About Sudoku Puzzles
