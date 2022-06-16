@@ -131,21 +131,26 @@ var Cell = {
 		return null;
 	},
 	'display': function(reveal) {
-		var td= $("<td id='" + this.div_id() + "'></td>").addClass('cell').addClass('x_'+this.x).addClass('y_'+this.y).addClass('group_'+this.group.id);
+		var td = document.createElement('td');
+		td.id = this.div_id();
+		td.classList.add('cell');
+		td.classList.add('x_' + this.x);
+		td.classList.add('y_' + this.y);
+		td.classList.add('group_' + this.group.id);
 		if (this.group.color !== null) {
-			td.addClass('color_' + this.group.color);
+			td.classList.add('color_' + this.group.color);
 		}
 		if (this.x == 0 || this.row.cells[this.x-1].group != this.group) {
-			td.addClass('ldiff');
+			td.classList.add('ldiff');
 		}
 		if (this.x == this.range-1 || this.row.cells[this.x+1].group != this.group) {
-			td.addClass('rdiff');
+			td.classList.add('rdiff');
 		}
 		if (this.y == 0 || this.col.cells[this.y-1].group != this.group) {
-			td.addClass('tdiff');
+			td.classList.add('tdiff');
 		}
 		if (this.y == this.range-1 || this.col.cells[this.y+1].group != this.group) {
-			td.addClass('bdiff');
+			td.classList.add('bdiff');
 		}
 		this.div = td;
 		if (reveal) this.reveal();
@@ -153,14 +158,22 @@ var Cell = {
 	},
 	'show_marker': function() {
 		var marker = '' + this.group.id + "/" + this.x + "," + this.y;
-		$(this.div).text(marker);
+		var text_node = document.createTextNode(marker);
+		this.div.appendChild(text_node);
+	},
+	'empty': function() {
+		while (this.div.firstChild) this.div.removeChild(this.div.firstChild);
 	},
 	'clear': function() {
+		this.empty();
 		this.showing = null;
-		$('*',this.div).remove();
 	},
 	'set_color': function(color) {
-		this.div.removeClass('color_0').removeClass('color_1').removeClass('color_2').removeClass('color_3').addClass('color_'+color);
+		this.div.classList.remove('color_0');
+		this.div.classList.remove('color_1');
+		this.div.classList.remove('color_2');
+		this.div.classList.remove('color_3');
+		this.div.classList.add('color_'+color);
 	},
 	'display_guesses': function() {
 		this.clear();
@@ -177,33 +190,42 @@ var Cell = {
 		this.showing='guess';
 		var guess_row = Math.floor(guess/this.guess_rows);
 		var guess_col = guess % this.guess_rows;
-		var guess_div = $('<div class="guess" id="'+this.guess_div_id(guess)+'">'+this.display_values[guess]+'</div>')
+		var guess_div = document.createElement('div');
+		guess_div.classList.add('guess');
+		guess_div.id = this.guess_div_id(guess);
+		var guess_div_txt = document.createTextNode(this.display_values[guess]);
+		guess_div.appendChild(guess_div_txt);
 		var pixel_padding = 2;
-		var guess_width = guess_div.width();
-		var cell_width = this.div.width() - pixel_padding * 2;
-		var guess_height = guess_div.height();
-		var cell_height = this.div.height() - pixel_padding * 2;
+		var guess_width = guess_div.offsetWidth;
+		var cell_width = this.div.offsetWidth - pixel_padding * 2;
+		var guess_height = guess_div.offsetHeight;
+		var cell_height = this.div.offsetHeight - pixel_padding * 2;
 		if (guess_row == 0) {
-			guess_div.css('top', '' + pixel_padding + 'px');
+			guess_div.style.top = '' + pixel_padding + 'px';
 		} else if (guess_row == this.guess_rows - 1) {
-			guess_div.css('bottom', '' + pixel_padding + 'px');
+			guess_div.style.bottom = '' + pixel_padding + 'px';
 		} else {
-			guess_div.css('top', '' + (cell_height * guess_row / (this.guess_rows-1) - guess_height/2.0 + pixel_padding) + 'px');
+			guess_div.style.top = '' + (cell_height * guess_row / (this.guess_rows-1) - guess_height/2.0 + pixel_padding) + 'px';
 		}
 		if (guess_col == 0) {
-			guess_div.css('left', '' + pixel_padding + 'px');
+			guess_div.style.left = '' + pixel_padding + 'px';
 		} else if (guess_col == this.guess_rows - 1) {
-			guess_div.css('right', '' + pixel_padding + 'px');
+			guess_div.style.right = '' + pixel_padding + 'px';
 		} else {
-			guess_div.css('left', '' + (cell_width * guess_col / (this.guess_rows-1) - guess_width/2.0 + pixel_padding) + 'px');
+			guess_div.style.left = '' + (cell_width * guess_col / (this.guess_rows-1) - guess_width/2.0 + pixel_padding) + 'px';
 		}
-		guess_div.appendTo(this.div);
+		this.div.appendChild(guess_div);
 	},
 	'reveal': function() {
 		this.clear();
 		if (this.value!==null && this.showing!=='answer') {
 			this.showing = 'answer';
-			$('<span class="revealed value">' + this.display_values[this.value] + '</span>').appendTo(this.div);
+			var span = document.createElement('span');
+			span.classList.add('revealed');
+			span.classList.add('value');
+			var span_txt = document.createTextNode(this.display_values[this.value]);
+			span.appendChild(span_txt);
+			this.div.appendChild(span);
 		}
 	},
 	'set_value': function(answer) {
@@ -284,9 +306,9 @@ var Cell = {
 	},
 	'reveal_conflicts': function() {
 		if (this.conflicts.size > 0) {
-			this.div.addClass('conflict');
+			this.div.classList.add('conflict');
 		} else {
-			this.div.removeClass('conflict');
+			this.div.classList.remove('conflict');
 		}
 	}
 };
@@ -1267,20 +1289,21 @@ var Sudoku = {
 		walk_puzzle(remaining_cells,0);
 
 	},
-	'display': function(containing_div_id, reveal) {
+	'display': function(containing_div, reveal) {
 		if (this.size) {
-			var table = $('<table class="sudoku"></table>');
+			var table = document.createElement('table');
+			table.classList.add('sudoku');
 			for (j=0 ; j<this.size ; j++) {
-				var row = $("<tr></tr>");
+				var table_row = document.createElement('tr');
 				for (i=0 ; i<this.size ; i++) {
 					var cell = this.rows[j].cells[i];
 					var col = cell.display(reveal);
-					col.appendTo(row);
+					table_row.appendChild(col);
 				}
-				row.appendTo(table);
+				table.appendChild(table_row);
 			}
 			this.element = table;
-			table.appendTo($(containing_div_id));
+			containing_div.appendChild(table);
 		}
 	},
 	'display_group_colors': function() {
@@ -1383,40 +1406,52 @@ var Sudoku = {
 			var cell = this.cells[i];
 			var val = cell.val;
 			if (val === undefined || val === null) val='';
-			var input = $('<input size="2" maxlength="2" type="text" value="' + val + '" />');
-			input.appendTo(cell.div);
+			var input = document.createElement('input');
+			input.type = 'text';
+			input.size = 2;
+			input.maxLength = 2;
+			input.value = val;
+			cell.div.appendChild(input);
 		}
 	},
 	'read_inputs': function() {
 		for (var i=0; i<this.size*this.size; i++) {
 			var cell = this.cells[i];
-			var value = cell.value_from_display(cell.div.find('input').val());
+			var value = cell.value_from_display(cell.div.querySelector('input').value);
 			if (value !== null) {
 				cell.value = value;
 			}
 		}
 	},
-	'create_controls': function(containing_div_id) {
+	'create_controls': function(containing_div) {
+		var controls_div = document.getElementById('controls');
 		for (var i=0 ; i<size ; i++) {
-			$('<a href="#" id="choose_' + i + '" class="chooser">' + Cell.display_values[i] + '</a>').appendTo('div#controls');
-			$('#choose_'+i).click(this.handle_number_click);
+			var a = document.createElement('a');
+			a.id = 'choose_' + i;
+			a.classList.add('chooser');
+			var a_txt = document.createTextNode(Cell.display_values[i]);
+			a.appendChild(a_txt);
+			controls_div.appendChild(a);
+			a.addEventListener('click', this.handle_number_click);
 		}
-		$(document).keyup(function(event) {
+		containing_div.addEventListener('keyup', function(event) {
 			var clicked_item = String.fromCharCode(event.keyCode);
 			var num = Cell.value_from_display(clicked_item);
 			sudoku.set_number(num);
 		});
-		$(".cell").click(function(event) {
+		document.addEventListener('click', function(event) {
 			if (!sudoku.current_number) { return; }
-			var reg;
-			// assignment on next line
-			if (reg=this.id.match(/group_(\d+)_(\d+)_cell_(\d+)_(\d+)/)) {
-				var cell=sudoku.groups[parseInt(reg[1])][parseInt(reg[2])].cols[parseInt(reg[3])].cells[parseInt(reg[4])];
-				if (cell) {
-					if (event.shiftKey) {
-						cell.display_guess(sudoku.current_number);
-					} else {
-						cell.set_value(sudoku.current_number);
+			if (event.target.classList.contains('cell')) {
+				var reg;
+				// assignment on next line
+				if (reg=this.id.match(/group_(\d+)_(\d+)_cell_(\d+)_(\d+)/)) {
+					var cell=sudoku.groups[parseInt(reg[1])][parseInt(reg[2])].cols[parseInt(reg[3])].cells[parseInt(reg[4])];
+					if (cell) {
+						if (event.shiftKey) {
+							cell.display_guess(sudoku.current_number);
+						} else {
+							cell.set_value(sudoku.current_number);
+						}
 					}
 				}
 			}
@@ -1431,8 +1466,9 @@ var Sudoku = {
 	},
 	'set_number': function(num) {
 		this.current_number = num;
-		$('.chooser').removeClass('current');
-		$('a#choose_'+num).addClass('current');
+		var chooser_els = document.querySelectorAll('a.chooser.current');
+		for (var a of Array.from(chooser_els)) { a.classList.remove('current'); }
+		document.getElementById('choose_'+num).classList.add('current');
 	},
 	'solve': function() {
 	}
